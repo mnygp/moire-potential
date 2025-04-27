@@ -1,0 +1,5 @@
+venv: /home/niflheim/mnype/mace_venv/bin/activate
+Running asr.relax_ml(atoms=Atoms(symbols='Mo510S1020Se940W470', pbc=[True, True, False], cell=[[69.081708156187, 0.0, 0.0], [-32.01578143815202, 64.85887698724629, 0.0], [0.0, 0.0, 24.48566545074434]], tags=...), tmp_atoms=None, tmp_atoms_file='relax_ml.traj', d3=True, fixcell=True, allow_symmetry_breaking=False, fmax=0.05, enforce_symmetry=True)
+Using Materials Project MACE for MACECalculator with /home/niflheim/mnype/.cache/mace/MACE_MPtrj_20229model
+Using float64 for MACECalculator, which is slower but more accurate. Recommended for geometry optimization.
+Using TorchDFTD3Calculator for D3 dispersion corrections

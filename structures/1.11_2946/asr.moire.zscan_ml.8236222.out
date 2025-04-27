@@ -1,0 +1,5 @@
+venv: /home/niflheim/mnype/mace_venv/bin/activate
+Running asr.zscan_ml(structure='initial.json', start=2.0, stop=5.0, nsteps=25, npoints=1200)
+Using Materials Project MACE for MACECalculator with /home/niflheim/mnype/.cache/mace/MACE_MPtrj_20229model
+Using float64 for MACECalculator, which is slower but more accurate. Recommended for geometry optimization.
+Using TorchDFTD3Calculator for D3 dispersion corrections
