@@ -1,9 +1,9 @@
 import numpy as np
 
 
-def closest_particle_index(position: np.ndarray,
-                           particles: np.ndarray,
-                           twoD: bool = True) -> int:
+def closest_index(position: np.ndarray,
+                  particles: np.ndarray,
+                  twoD: bool = True) -> int:
     if twoD:
         r_diff = particles[:, :2] - position[:2]
     else:
@@ -37,6 +37,17 @@ def repeate_cells(x: np.ndarray, y: np.ndarray, data: np.ndarray,
             y = np.concatenate((y, new_y), axis=0)
 
     return x, y, data
+
+
+def check_formula(chemicals: np.ndarray):
+    chem = ["W", "Se", "Mo", "S"]
+    number = [1, 2, 1, 2]
+    chemicals = np.array(chemicals)
+    for i, j in zip(number, chem):
+        if i != np.sum(chemicals == j):
+            return False
+
+    return True
 
 # TODO: Create function to move bilayers apart
 #     # Take the average position of all atoms and then move
