@@ -1,4 +1,5 @@
 import numpy as np
+from ase import Atoms
 
 
 def closest_index(position: np.ndarray,
@@ -49,6 +50,23 @@ def check_formula(chemicals: np.ndarray):
 
     return True
 
-# TODO: Create function to move bilayers apart
-#     # Take the average position of all atoms and then move
-#     # all the atoms above further up and all the atoms below further down 
+
+def add_distance(atoms: Atoms, distance: float) -> Atoms:
+
+    positions = atoms.get_positions()
+    average_z = np.mean(positions[:, 2], axis=0)
+
+    # Move the atoms above the center of mass up and below down
+    for i in range(len(positions)):
+        if positions[i, 2] > average_z:
+            positions[i, 2] += distance/2
+        else:
+            positions[i, 2] -= distance/2
+
+    atoms.cell[2, 2] += distance
+    atoms.center(axis=2)
+
+    # Set the new positions of the atoms
+    # atoms.set_positions(positions)
+
+    return atoms
