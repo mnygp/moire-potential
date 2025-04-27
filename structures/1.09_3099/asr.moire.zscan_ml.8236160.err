@@ -1,0 +1,41 @@
+/home/niflheim/mnype/.bashrc: line 12: bind: warning: line editing not enabled
+/home/niflheim/mnype/moire/venv/lib/python3.11/site-packages/e3nn/o3/_wigner.py:10: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  _Jd, _W3j_flat, _W3j_indices = torch.load(os.path.join(os.path.dirname(__file__), 'constants.pt'))
+/home/niflheim/mnype/moire/venv/lib/python3.11/site-packages/mace/calculators/mace.py:130: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  torch.load(f=model_path, map_location=device)
+Traceback (most recent call last):
+  File "/home/niflheim/mnype/moire/venv/lib/python3.11/site-packages/mace/calculators/foundations_models.py", line 137, in mace_mp
+    from torch_dftd.torch_dftd3_calculator import TorchDFTD3Calculator
+ModuleNotFoundError: No module named 'torch_dftd'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/niflheim/mnype/moire/venv/asr/asr/moire/zscan_ml.py", line 140, in <module>
+    main.cli()
+  File "/home/niflheim/mnype/moire/venv/asr/asr/core/command.py", line 325, in cli
+    return command(standalone_mode=False,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/modules/software/Python-bundle-PyPI/2023.06-GCCcore-12.3.0/lib/python3.11/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/modules/software/Python-bundle-PyPI/2023.06-GCCcore-12.3.0/lib/python3.11/site-packages/click/core.py", line 1055, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/modules/software/Python-bundle-PyPI/2023.06-GCCcore-12.3.0/lib/python3.11/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/modules/software/Python-bundle-PyPI/2023.06-GCCcore-12.3.0/lib/python3.11/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/niflheim/mnype/moire/venv/asr/asr/core/command.py", line 372, in main
+    result = self._main(**copy.deepcopy(params)) or {}
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/niflheim/mnype/moire/venv/asr/asr/moire/zscan_ml.py", line 124, in main
+    calc = mace_mp(model="large", dispersion=True, default_dtype="float64",
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/niflheim/mnype/moire/venv/lib/python3.11/site-packages/mace/calculators/foundations_models.py", line 139, in mace_mp
+    raise RuntimeError(
+RuntimeError: Please install torch-dftd to use dispersion corrections (see https://github.com/pfnet-research/torch-dftd)
