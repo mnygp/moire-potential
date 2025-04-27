@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from functions.util import closest_particle_index, repeate_cells
+from functions.util import closest_index, repeate_cells
 from ase import Atoms
 
 
@@ -28,7 +28,7 @@ def height(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     bottom_layer_large = np.array([x, y, z]).T
 
     for top_pos in top_layer:
-        close = closest_particle_index(top_pos, bottom_layer_large)
+        close = closest_index(top_pos, bottom_layer_large)
         top_pos[2] = top_pos[2] - bottom_layer_large[close, 2]
 
     return top_layer[:, 0], top_layer[:, 1], top_layer[:, 2]
@@ -63,7 +63,7 @@ def horizontal_distance(atoms: Atoms) -> tuple[np.ndarray,
     S_atoms_large = np.array([x, y, z]).T
 
     for pos in Se_inner_atoms:
-        close = closest_particle_index(pos, S_atoms_large)
+        close = closest_index(pos, S_atoms_large)
         closest_particle = S_atoms_large[close]
         xy_distance = np.sqrt((pos[0] - closest_particle[0])**2
                               + (pos[1] - closest_particle[1])**2)
@@ -91,7 +91,7 @@ def modified_h_dist(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     W_atoms_large = np.array([x, y, z]).T
 
     for pos in Mo_atoms:
-        close = closest_particle_index(pos, W_atoms)
+        close = closest_index(pos, W_atoms)
         closest_particle = W_atoms_large[close]
         xy_distance = np.sqrt((pos[0] - closest_particle[0])**2
                               + (pos[1] - closest_particle[1])**2)
@@ -186,7 +186,7 @@ def layer_thicknsess(atoms: Atoms, atom_type: str) -> tuple[np.ndarray,
     bottom_layer_large = np.array([x, y, z]).T
 
     for i, pos in enumerate(top_layer):
-        close = closest_particle_index(pos, bottom_layer_large)
+        close = closest_index(pos, bottom_layer_large)
         top_layer[i, 2] = pos[2] - bottom_layer_large[close, 2]
 
     return top_layer[:, 0], top_layer[:, 1], top_layer[:, 2]
@@ -210,7 +210,7 @@ def interlayer_distance(atoms: Atoms) -> tuple[np.ndarray,
     W_large = np.array([x, y, z]).T
 
     for pos in Mo_atoms:
-        close = closest_particle_index(pos, W_large)
+        close = closest_index(pos, W_large)
         closest_particle = W_large[close]
         z_distance = abs(pos[2] - closest_particle[2])
         pos[2] = z_distance
