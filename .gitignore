@@ -3,3 +3,4 @@ __pycache__/
 *.out
 **/tree/
 **/.taskblaster
+Moire_Potential.egg-info
