@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def calc_gap(atom_path: Path, path: str, funcional: str = "PBE",
-             kpts: tuple[float, float, float] = (18, 18, 1),
+             kpts: tuple[float, float, float] = (24, 24, 1),
              filename: None | str = None) -> float:
 
     atoms = read(atom_path)
@@ -17,7 +17,7 @@ def calc_gap(atom_path: Path, path: str, funcional: str = "PBE",
         file = "gap_calc.gpw"
 
     # Set up the calculator
-    calc = GPAW(mode=PW(400),  # Basis set
+    calc = GPAW(mode=PW(500),  # Basis set
                 xc=funcional,  # Functional
                 kpts={'size': kpts},  # k-points
                 occupations=FermiDirac(0.01),
