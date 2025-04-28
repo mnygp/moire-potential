@@ -7,25 +7,31 @@ import csv
 from ase.io import read, write
 from ase import Atoms
 
-from functions.util import closest_index, check_formula, dist
+from functions.util import closest_index, check_formula
+from functions.util import dist, add_distance
 from functions.bandstructure import calc_gap
 
 
 @tb.dynamical_workflow_generator_task
 def generate_wfs_task(result_dict):
 
-    atoms = result_dict['atoms']
+    atom_paths = result_dict['atoms']
+    atom_extra_dist_paths = result_dict['extra_dist_atoms']
     centers = result_dict['centers']
 
-    for i in range(len(atoms)):
-        wf = SubWorkflow(atom=atoms[i], center=centers[i], number=i)
+    for i in range(len(atom_paths)):
+        wf = real_dist_workflow(atom=atom_paths[i],
+                                extra_dist_atom=atom_extra_dist_paths[i],
+                                center=centers[i],
+                                number=i)
         name = f'gap_{i}'
         yield name, wf
 
 
 @tb.workflow
-class SubWorkflow:
+class real_dist_workflow:
     atom = tb.var()
+    extra_dist_atom = tb.var()
     center = tb.var()
     number = tb.var()
 
@@ -33,6 +39,11 @@ class SubWorkflow:
     def calc_gap_task(self):
         return tb.node('calculate_gap', atom=self.atom, center=self.center,
                        number=self.number)
+
+    @tb.task
+    def calc_extra_gap_task(self):
+        return tb.node('calculate_gap', atom=self.extra_dist_atom,
+                       center=self.center, number=self.number)
 
 
 def calculate_gap(atom: Path, center: list[float], number: int):
@@ -49,7 +60,7 @@ def calculate_gap(atom: Path, center: list[float], number: int):
     return {'gap': gap, 'center': center, 'number': number}
 
 
-def write_results_to_csv(results_dict) -> Path:
+def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
     rows = []
     for name, d in results_dict.items():
         center = d['center']
@@ -64,7 +75,7 @@ def write_results_to_csv(results_dict) -> Path:
                 "z": center[2]
             })
 
-    csv_path = Path("results.csv")
+    csv_path = Path(csv_name)
     with open(csv_path, mode="w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile,
                                 fieldnames=["name", "gap", "x", "y", "z"])
@@ -83,13 +94,22 @@ def create_atoms_list(file: str) -> dict[str, list[Path | list[float]]]:
 
     output_dir = Path("atom_files")
     output_dir.mkdir(exist_ok=True)
+    output_dir = Path("extra_dist_files")
+    output_dir.mkdir(exist_ok=True)
 
     atoms_paths = []
+    atoms_extra_dist_path = []
+
     for i, atoms in enumerate(atoms_arr):
         write(f'atom_files/atoms_{i}.xyz', atoms)
         atoms_paths.append(Path(f'atom_files/atoms_{i}.xyz'))
 
+        atoms_extra_dist = add_distance(atoms, 5.0)
+        write(f'extra_dist_files/atoms_{i}.xyz', atoms_extra_dist)
+        atoms_extra_dist_path.append(Path(f'extra_dist_files/atoms_{i}.xyz'))
+
     return {'atoms': atoms_paths,
+            'extra_dist_atoms': atoms_extra_dist_path,
             'centers': centers.tolist(),
             'origins': origins.tolist()}
 
