@@ -54,7 +54,7 @@ def check_formula(chemicals: np.ndarray):
 
 def add_distance(atoms: Atoms, distance: float) -> Atoms:
 
-    positions = atoms.get_positions()
+    positions = atoms.positions
     average_z = np.mean(positions[:, 2], axis=0)
 
     # Move the atoms above the center of mass up and below down
