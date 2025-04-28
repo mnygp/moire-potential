@@ -3,9 +3,9 @@ from gpaw import GPAW, PW, FermiDirac
 from pathlib import Path
 
 
-def calc_gap(atom_path: Path, funcional: str = "PBE",
+def calc_gap(atom_path: Path, path: str, funcional: str = "PBE",
              kpts: tuple[float, float, float] = (18, 18, 1),
-             filename: None | str = None, path: str = "GZ") -> float:
+             filename: None | str = None) -> float:
 
     atoms = read(atom_path)
 
