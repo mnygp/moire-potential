@@ -37,13 +37,17 @@ class real_dist_workflow:
 
     @tb.task
     def calc_gap_task(self):
-        return tb.node('calculate_gap', atom=self.atom, center=self.center,
+        return tb.node('calculate_gap',
+                       atom=self.atom,
+                       center=self.center,
                        number=self.number)
 
     @tb.task
     def calc_extra_gap_task(self):
-        return tb.node('calculate_gap', atom=self.extra_dist_atom,
-                       center=self.center, number=self.number)
+        return tb.node('calculate_gap',
+                       atom=self.extra_dist_atom,
+                       center=self.center,
+                       number=self.number)
 
 
 def calculate_gap(atom: Path, center: list[float], number: int):
