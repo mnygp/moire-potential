@@ -4,6 +4,7 @@ from ase import Atoms
 
 def closest_index(position: np.ndarray,
                   particles: np.ndarray,
+                  index: int = 0,
                   twoD: bool = True) -> int:
     if twoD:
         r_diff = particles[:, :2] - position[:2]
@@ -12,7 +13,7 @@ def closest_index(position: np.ndarray,
 
     distances = np.sqrt(np.sum(r_diff**2, axis=1))
 
-    return np.argsort(distances)[0]
+    return np.argsort(distances)[index]
 
 
 def repeate_cells(x: np.ndarray, y: np.ndarray, data: np.ndarray,
