@@ -71,3 +71,10 @@ def add_distance(atoms: Atoms, distance: float) -> Atoms:
     # atoms.set_positions(positions)
 
     return atoms
+
+
+def dist(a: np.ndarray, b: np.ndarray, twoD: bool = True) -> float:
+    if twoD:
+        a = a[:2]
+        b = b[:2]
+    return np.sqrt(np.sum((a - b)**2))
