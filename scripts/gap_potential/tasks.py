@@ -52,11 +52,9 @@ class real_dist_workflow:
 
 def calculate_gap(atom: Path, center: list[float], number: int):
     atoms_obj = read(atom)
-    path_map_2d = {
-                   'ORCC': 'GXSX1YG',
+    path_map_2d = {'ORCC': 'GXSX1YG',
                    'HEX':  'GMKG',
-                   'MCL':  'GYHCH1XH2G',
-                    }
+                   'MCL':  'GYHCH1XH2G'}
 
     cell_type = atoms_obj.cell.get_bravais_lattice().name
     BZ_path = path_map_2d[cell_type]
@@ -232,13 +230,30 @@ def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
     while not check_formula(atoms.get_chemical_symbols()):
         for atom_type in chemical_number.keys():
             symb = np.array(atoms.get_chemical_symbols())
+            # Check whether the number of atoms is correct
             if len(symb[symb == atom_type]) != chemical_number[atom_type]:
                 indices = [i for i, x in enumerate(symb) if x == atom_type]
+                # For S and Se, if there are 3 atoms, we want to keep
+                # the pair of atoms that are above each other
+                # and remove the one that is isolated
+                if len(indices) == 3 and (atom_type == 'S'
+                                          or atom_type == 'Se'):
+                    remove_isolated(atoms, indices)
+                else:
+                    distances = np.array([dist(atoms.positions[i], origin)
+                                          for i in indices])
 
-                distances = np.array([dist(atoms.positions[i], origin)
-                                     for i in indices])
+                    furthest_index = indices[np.argmax(distances)]
+                    del atoms[furthest_index]
 
-                furthest_index = indices[np.argmax(distances)]
-                del atoms[furthest_index]
+    return atoms
 
+
+def remove_isolated(atoms: Atoms, indices: list[int]) -> Atoms:
+    distances = []
+    for i in indices:
+        d = atoms.get_distances(i, indices)
+        distances.append(sum(d))
+    # Remove the most isolated atom
+    del atoms[indices[np.argmax(distances)]]
     return atoms
