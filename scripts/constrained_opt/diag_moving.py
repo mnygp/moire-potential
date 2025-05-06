@@ -13,10 +13,6 @@ from functions.bandstructure import calc_gap
 import numpy as np
 import csv
 
-path_map_2d = {'ORCC': 'GXSX1YG',
-               'HEX':  'GMKG',
-               'MCL':  'GYHCH1XH2G'}
-
 
 def create_structure() -> Atoms:
     MoS2_len = 3.184
@@ -39,7 +35,7 @@ def create_structure() -> Atoms:
     struct.set_constraint(FixedLine(indices=indices, direction=[0, 0, 1]))
 
     struct.pbc = True
-    # TODO Move atoms to other corner
+    struct.wrap()
 
     return struct
 
