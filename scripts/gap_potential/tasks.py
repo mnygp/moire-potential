@@ -51,14 +51,7 @@ class real_dist_workflow:
 
 
 def calculate_gap(atom: Path, center: list[float], number: int):
-    atoms_obj = read(atom)
-    path_map_2d = {'ORCC': 'GXSX1YG',
-                   'HEX':  'GMKG',
-                   'MCL':  'GYHCH1XH2G'}
-
-    cell_type = atoms_obj.cell.get_bravais_lattice().name
-    BZ_path = path_map_2d[cell_type]
-    gap = calc_gap(atom, path=BZ_path, filename=f'gap_calc_{number}.gpw')
+    gap = calc_gap(atom, kpts=36)
     return {'gap': gap, 'center': center, 'number': number}
 
 
@@ -179,7 +172,9 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return v1_arr, v2_arr, origins
 
 
-def get_atom_obj(atoms, origins, v1, v2):
+def get_atom_obj(atoms: Atoms, origins: np.ndarray,
+                 v1: np.ndarray, v2: np.ndarray) -> tuple[list[Atoms],
+                                                          np.ndarray]:
     moire_v1 = atoms.cell[0]
     moire_v2 = atoms.cell[1]
 
