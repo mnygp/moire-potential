@@ -1,5 +1,6 @@
 import numpy as np
 from ase import Atoms
+from pathlib import Path
 
 
 def closest_index(position: np.ndarray,
@@ -78,3 +79,19 @@ def dist(a: np.ndarray, b: np.ndarray, twoD: bool = True) -> float:
         a = a[:2]
         b = b[:2]
     return np.sqrt(np.sum((a - b)**2))
+
+
+def get_root_path(directory: str) -> Path:
+    current_path = Path(__file__).resolve()
+    print(f"Current path: {current_path}")
+
+    for parent in current_path.parents:
+        if parent.name == directory:
+            base_dir = parent
+            break
+    else:
+        raise FileNotFoundError("Could not find a directory" /
+                                f"named {directory} in the" /
+                                f" path {current_path}")
+
+    return base_dir
