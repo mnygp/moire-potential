@@ -13,6 +13,7 @@ from ase.build import mx2
 from ase.constraints import FixedLine
 from ase.optimize import BFGS
 from ase.filters import UnitCellFilter
+from ase.calculators.dftd3 import DFTD3
 
 
 @tb.dynamical_workflow_generator_task
@@ -50,8 +51,12 @@ class single_cell:
     @tb.task
     def post_relax_gap_task(self):
         return tb.node('calc_gap',
-                       atom_path=self.relaxation_task['path'],  # type:ignore
+                       atom_path=self.relaxation_task,
                        kpts=36)
+
+    @tb.task
+    def distance_task(self):
+        return tb.node('get_z_dist', atom_path=self.relaxation_task)
 
     @tb.task
     def return_dict_task(self):
@@ -59,7 +64,8 @@ class single_cell:
                        i=self.x,
                        j=self.y,
                        pre_relax=self.pre_relax_gap_task,
-                       post_relax=self.post_relax_gap_task)
+                       post_relax=self.post_relax_gap_task,
+                       z_dist=self.distance_task)
 
 
 def create_tuple_list(x: int, y: int) -> list[tuple[float, float]]:
@@ -67,8 +73,12 @@ def create_tuple_list(x: int, y: int) -> list[tuple[float, float]]:
             for j in np.linspace(0, 1, y, endpoint=False)]
 
 
-def return_as_dict(i: int, j: int, pre_relax: float, post_relax: float):
-    return {'x': i, 'y': j, 'pre': pre_relax, 'post': post_relax}
+def return_as_dict(i: int, j: int,
+                   pre_relax: float, post_relax: float,
+                   z_dist: float):
+    return {'x': i, 'y': j,
+            'pre': pre_relax, 'post': post_relax,
+            'distance': z_dist}
 
 
 def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
@@ -136,10 +146,12 @@ def create_structure(i: float, j: float) -> Atoms:
     return Path(file_name)
 
 
-def relaxation(atom_path: Path, i: int, j: int) -> dict:
+def relaxation(atom_path: Path, i: int, j: int):
     atoms = read(atom_path)
 
-    atoms.calc = GPAW(mode=PW(500), xc='PBE', kpts={'size': (8, 8, 1)})
+    calc = GPAW(mode=PW(500), xc='PBE', kpts={'size': (8, 8, 1)})
+    d3_calc = DFTD3(dft=calc)
+    atoms.calc = d3_calc
 
     root = get_root_path()
 
@@ -156,8 +168,15 @@ def relaxation(atom_path: Path, i: int, j: int) -> dict:
     # Write to internal directory for taskblasters sake
     write(file_name, atoms)
 
-    return {'path': Path(file_name),
-            'lengths': atoms.cell.lengths()}
+    return Path(file_name)
+
+
+def get_z_dist(atom_path: Path):
+    atoms = read(atom_path)
+    symb = np.array(atoms.get_chemical_symbols())
+    z_dist = (atoms[symb == 'W'].positions[0][2]
+              - atoms[symb == 'Mo'].positions[0][2])
+    return z_dist
 
 
 def get_root_path() -> Path:

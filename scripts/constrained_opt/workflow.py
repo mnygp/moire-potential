@@ -19,7 +19,8 @@ class Workflow:
     @tb.task
     def write_csv_task(self):
         return tb.node('write_results_to_csv',
-                       result_dict=self.generate_wfs.gap_results)
+                       results_dict=self.generate_wfs.gap_results,
+                       csv_name='results.csv')
 
 
 def workflow(runner):
