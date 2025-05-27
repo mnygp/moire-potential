@@ -88,10 +88,12 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
         y = d['y']
         pre_relax = d['pre']
         post_relax = d['post']
+        dist = d['distance']
 
         rows.append({
             "x": x,
             "y": y,
+            "distance": dist,
             "pre": pre_relax,
             "post": post_relax
         })
@@ -99,7 +101,8 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
     csv_path = Path(csv_name)
     with open(csv_path, mode="w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile,
-                                fieldnames=["x", "y", "pre", "post"])
+                                fieldnames=["x", "y", "distance",
+                                            "pre", "post"])
         writer.writeheader()
         writer.writerows(rows)
     return csv_path
@@ -138,7 +141,7 @@ def create_structure(i: float, j: float) -> Atoms:
     root = get_root_path()
 
     folder_path = root / 'atoms_files_pre_relax/'
-    file_name = f'MoS2WSe2_{i:.2f}_{j:.2f}.xyz'
+    file_name = f'MoS2WSe2_{i:.2f}_{j:.2f}.traj'
     # Write to external directory for organising
     write(folder_path / file_name, struct)
     # Write to internal directory for taskblasters sake
@@ -155,13 +158,14 @@ def relaxation(atom_path: Path, i: int, j: int):
 
     root = get_root_path()
 
-    uf = UnitCellFilter(atoms)
+    # mask makes it so the unitcell is only optimised in the x and y directions
+    uf = UnitCellFilter(atoms, mask=[1, 1, 0, 0, 0, 1])
     traj_path = root / 'trajectory_files' / f'opt_{i:.2f}_{j:.2f}.traj'
     relax = BFGS(uf, trajectory=traj_path)
     relax.run(fmax=0.01)
 
     folder_path = root / 'atoms_files_post_relax/'
-    file_name = f'MoS2WSe2_{i:.2f}_{j:.2f}_relaxed.xyz'
+    file_name = f'MoS2WSe2_{i:.2f}_{j:.2f}_relaxed.traj'
 
     # Write to external directory for organising
     write(folder_path / file_name, atoms)
