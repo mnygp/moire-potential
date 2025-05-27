@@ -4,5 +4,5 @@ __pycache__/
 **/tree/
 **/.taskblaster
 Moire_Potential.egg-info
-scripts/constrained_opt/atoms_files
-scripts//constrained_opt/trajectory_files
+scripts/constrained_opt/atoms_files_*
+scripts/constrained_opt/trajectory_files
