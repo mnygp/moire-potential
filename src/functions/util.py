@@ -101,12 +101,14 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     atoms_L = atoms.repeat((3, 3, 1))
 
     W_pos = atoms.positions[atoms.symbols == "W"]
-    W_pos += (atoms.cell[0] + atoms.cell[1])
+    W_pos += (atoms.cell[0] + atoms.cell[1])  # Shift W positions to the middle
+    # of the 3x3 supercell
 
     W_L_pos = atoms_L.positions[atoms_L.symbols == "W"]
 
+    # Find the first W position and calculate the approximate vectors
+    # for the small cell. The second vector is rotated by 60 degrees
     approx_v1 = W_pos[closest_index(W_pos[0], W_pos, index=1)] - W_pos[0]
-
     rot_matrix = np.array([[0.5, -np.sqrt(3)/2, 0],
                            [np.sqrt(3)/2, 0.5, 0],
                            [0, 0, 1]])
@@ -118,6 +120,7 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     origins = np.array([])
 
     for pos in W_pos:
+        # Find the closest W position to the approximated vectors
         v1_end = W_L_pos[closest_index(pos + approx_v1, W_L_pos)]
         v2_end = W_L_pos[closest_index(pos + approx_v2, W_L_pos)]
 
@@ -130,6 +133,7 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
     v1_arr = v1_arr.reshape(-1, 3)
     v2_arr = v2_arr.reshape(-1, 3)
+    # Shift the origins back to the original positions
     origins = origins.reshape(-1, 3) - (atoms.cell[0] + atoms.cell[1])
 
     v1_arr[:, 2] = 0
@@ -141,6 +145,10 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 def get_atom_obj(atoms: Atoms, origins: np.ndarray,
                  v1: np.ndarray, v2: np.ndarray) -> tuple[list[Atoms],
                                                           np.ndarray]:
+    # A function that takes the atoms object and the origins,
+    # v1 and v2 vectors and returns a list of atoms objects
+    # that are the small cells of the moire pattern.
+
     moire_v1 = atoms.cell[0]
     moire_v2 = atoms.cell[1]
 
