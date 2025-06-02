@@ -80,7 +80,7 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
     return csv_path
 
 
-def create_atoms_list(file: str) -> dict[str, list[Path | list[float]]]:
+def create_atoms_list(file: str) -> dict[str, list[Path | list[float] | str]]:
     atoms = read(file)
 
     v1, v2, origins = get_cells(atoms)
@@ -118,8 +118,8 @@ def get_path(structure_name: str) -> str:
             base_dir = parent
             break
     else:
-        raise FileNotFoundError("Could not find a directory" /
-                                "named moire-potential in the" /
+        raise FileNotFoundError("Could not find a directory" +
+                                "named moire-potential in the" +
                                 f" path {current_path}")
     print(f"Base directory: {base_dir}")
 

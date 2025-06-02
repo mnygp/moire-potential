@@ -68,9 +68,6 @@ def add_distance(atoms: Atoms, distance: float) -> Atoms:
     atoms.cell[2, 2] += distance
     atoms.center(axis=2)
 
-    # Set the new positions of the atoms
-    # atoms.set_positions(positions)
-
     return atoms
 
 
