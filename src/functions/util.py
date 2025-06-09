@@ -78,20 +78,17 @@ def dist(a: np.ndarray, b: np.ndarray, twoD: bool = True) -> float:
     return np.sqrt(np.sum((a - b)**2))
 
 
-def get_root_path(directory: str) -> Path:
+def get_root_path(directory: str) -> str | None:
     current_path = Path(__file__).resolve()
     print(f"Current path: {current_path}")
 
     for parent in current_path.parents:
         if parent.name == directory:
-            base_dir = parent
-            break
+            return str(parent)
     else:
         raise FileNotFoundError("Could not find a directory" +
                                 f"named {directory} in the" +
                                 f" path {current_path}")
-
-    return base_dir
 
 
 def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
