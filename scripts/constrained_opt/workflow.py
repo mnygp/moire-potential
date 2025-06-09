@@ -1,20 +1,26 @@
 import taskblaster as tb
 
+path = '/structures/1.11_2946/structure_ml.json'
+
 
 @tb.workflow
 class Workflow:
-    x_points = tb.var()
-    y_points = tb.var()
+    struct_path = tb.var()
 
     @tb.task
-    def tuple_list_task(self):
-        return tb.node('create_tuple_list', x=self.x_points, y=self.y_points)
+    def get_root_task(self):
+        return tb.node('get_root_path', directory='moire-potential')
+
+    @tb.task
+    def get_shifts_task(self):
+        return tb.node('get_shifts', structure_path=self.struct_path,
+                       root=self.get_root_task)
 
     @tb.dynamical_workflow_generator({'results': '*/*',
                                       'gap_results': '*/return_dict_task'})
     def generate_wfs(self):
         return tb.node('generate_wfs_task',
-                       coords=self.tuple_list_task)
+                       input=self.get_shifts_task)  # type:ignore
 
     @tb.task
     def write_csv_task(self):
@@ -24,4 +30,4 @@ class Workflow:
 
 
 def workflow(runner):
-    runner.run_workflow(Workflow(x_points=15, y_points=15))  # type:ignore
+    runner.run_workflow(Workflow(struct_path=path))  # type:ignore
