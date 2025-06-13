@@ -20,8 +20,8 @@ from ase.calculators.dftd3 import DFTD3
 
 @tb.dynamical_workflow_generator_task
 def generate_wfs_task(input: dict[str, list[list[float]]]):
-    for i, c in zip(input['points'], input['centers']):
-        wf = single_cell(x=i[0], y=i[1], center=c)  # type:ignore
+    for i, c, z in zip(input['shifts'], input['centers'], input['z distance']):
+        wf = single_cell(x=i[0], y=i[1], center=c, ml_z_dist=z)  # type:ignore
         name = f'gap_{i[0]:.2f}_{i[1]:.2f}'
         yield name, wf
 
@@ -30,6 +30,7 @@ def generate_wfs_task(input: dict[str, list[list[float]]]):
 class single_cell:
     x = tb.var()
     y = tb.var()
+    ml_z_dist = tb.var()
     center = tb.var()
 
     @tb.task
@@ -90,7 +91,8 @@ class single_cell:
                        z_dist_no_strain=self.distance_no_strain_task,
                        post_relax_with_strain=self.post_relax_with_strain_gap_task,  # noqa: E501
                        z_dist_with_strain=self.distance_with_strain_task,
-                       center=self.center)
+                       center=self.center,
+                       z_dist_ml=self.ml_z_dist)
 
 
 def get_shifts(structure_path: str,
@@ -101,36 +103,39 @@ def get_shifts(structure_path: str,
 
     x = []
     y = []
+    z_dist_arr = []
 
     for a, o in zip(atoms_arr, origins):
         a.wrap()
         cell_vectors = a.cell[:2, :2]
-        # cell_vectors[:, 1] *= -1
         Mo_postion = a.positions[a.get_chemical_symbols().index('Mo')]
-        # distance = util.dist(Mo_postion, o)
-        a.wrap()
+        W_postion = a.positions[a.get_chemical_symbols().index('W')]
+
+        z_dist = abs(W_postion[2] - Mo_postion[2])
+        z_dist_arr.append(z_dist)
 
         crystal_pos = np.linalg.solve(cell_vectors.T, Mo_postion[:2])
         x.append(crystal_pos[0])
         y.append(crystal_pos[1])
 
-        # write(f'test_atom_files/atoms_{x[-1]:.2f}_{y[-1]:.2f}.xyz', a)
-
     combined = np.stack((x, y), axis=-1).tolist()
 
-    return {'points': combined, 'centers': cell_center.tolist()}  # type:ignore
+    return {'shifts': combined,
+            'centers': cell_center.tolist(),
+            'z distance': z_dist_arr}  # type:ignore
 
 
 def return_as_dict(i: int, j: int, pre_relax: float,
                    post_relax_no_strain: float, z_dist_no_strain: float,
                    post_relax_with_strain: float, z_dist_with_strain: float,
-                   center: list[float]) -> dict[str, float | int
-                                                | list[float]]:
-    return {'x': i, 'y': j, 'center': center, 'pre': pre_relax,
+                   center: list[float], z_dist_ml) -> dict[str, float | int
+                                                           | list[float]]:
+    return {'x_shift': i, 'y_shift': j, 'center': center, 'pre': pre_relax,
             'post no strain': post_relax_no_strain,
             'distance no strain': z_dist_no_strain,
             'post with strain': post_relax_with_strain,
-            'distance with strain': z_dist_with_strain}
+            'distance with strain': z_dist_with_strain,
+            'z distance ml': z_dist_ml}
 
 
 def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
@@ -141,32 +146,35 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
         cx = d['center'][0]
         cy = d['center'][1]
         pre_relax = d['pre']
-        post_relax_no_strain = d['post no strain']
+        post_relax_no_strain = d['gap post no strain']
         dist_no_strain = d['distance no strain']
-        post_relax_with_strain = d['post no strain']
+        post_relax_with_strain = d['gap post with strain']
         dist_with_strain = d['distance no strain']
+        z_dist_ml = d['z distance ml']
 
         rows.append({
             "x": x,
             "y": y,
             "center x": cx,
             "center y": cy,
-            "pre": pre_relax,
-            "post no strain": post_relax_no_strain,
+            "gap pre": pre_relax,
+            "gap post no strain": post_relax_no_strain,
             "dist no strain": dist_no_strain,
-            "post with strain": post_relax_with_strain,
-            "dist with strain": dist_with_strain
+            "gap post with strain": post_relax_with_strain,
+            "dist with strain": dist_with_strain,
+            "dist with ml": z_dist_ml
         })
 
     csv_path = Path(csv_name)
     with open(csv_path, mode="w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile,
                                 fieldnames=["x", "y", "center x", "center y",
-                                            "pre",
-                                            "post no strain",
+                                            "gap pre relax",
+                                            "gap post no strain",
                                             "dist no strain",
-                                            "post with strain",
-                                            "dist with strain"])
+                                            "gap post with strain",
+                                            "dist with strain",
+                                            "dist with ml"])
         writer.writeheader()
         writer.writerows(rows)
     return csv_path
@@ -251,7 +259,7 @@ def get_z_dist(atom_path: Path):
     symb = np.array(atoms.get_chemical_symbols())
     z_dist = (atoms[symb == 'W'].positions[0][2]
               - atoms[symb == 'Mo'].positions[0][2])
-    return z_dist
+    return abs(z_dist)
 
 
 def get_root_path(directory: str) -> str:
