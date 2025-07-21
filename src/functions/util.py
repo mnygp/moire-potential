@@ -1,6 +1,7 @@
 import numpy as np
 from ase import Atoms
 from pathlib import Path
+from ase.build import mx2
 
 
 def closest_index(position: np.ndarray,
@@ -220,3 +221,32 @@ def remove_isolated(atoms: Atoms, indices: list[int]) -> Atoms:
     # Remove the most isolated atom
     del atoms[indices[np.argmax(distances)]]
     return atoms
+
+
+def create_structure(lattice_length: float, diag_shift: float) -> Atoms:
+
+    MoS2 = mx2('MoS2', a=lattice_length, vacuum=6.0)
+    WSe2 = mx2('WSe2', a=lattice_length, vacuum=6.0)
+
+    # 6.6Å of distance between layers
+    MoS2.positions[:, 2] += 3.3
+    WSe2.positions[:, 2] -= 3.3
+
+    # Create the initial structure
+    struct = WSe2 + MoS2
+    struct.center(vacuum=10.0, axis=2)
+
+    struct.positions += struct.cell[0]
+
+    # indices = [atom.index for atom in struct if (atom.symbol == 'W' or
+    #                                              atom.symbol == 'Mo')]
+    # struct.set_constraint(FixedLine(indices=indices, direction=[0, 0, 1]))
+
+    for atom in struct:
+        if atom.symbol == 'Mo' or atom.symbol == 'S':
+            atom.position += diag_shift*(struct.cell[0] + struct.cell[1])
+
+    struct.pbc = True
+    struct.wrap()
+
+    return struct

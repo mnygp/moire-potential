@@ -21,12 +21,14 @@ z_dense_bottom = 2 + 0.3 * np.sin(2 * np.pi * (x_dense + 0.5) / 10)
 fig, ax = plt.subplots(figsize=(8, 4))
 
 # Curved lines
-ax.plot(x_dense, z_dense_top, color='purple', label='WSe₂ layer (W atoms)')
-ax.plot(x_dense + 0.5, z_dense_bottom, color='orange', label='MoS₂ layer (Mo atoms)')
+ax.plot(x_dense, z_dense_top, color='purple',
+        label='WSe₂ layer (W atoms)')
+ax.plot(x_dense + 0.5, z_dense_bottom, color='orange',
+        label='MoS₂ layer (Mo atoms)')
 
 # Atom dots
-ax.plot(x_atoms, z_atoms_top, 'o', color='purple')        # W atoms
-ax.plot(x_atoms_shifted, z_atoms_bottom, 'o', color='orange')  # Mo atoms
+ax.plot(x_atoms, z_atoms_top, 'o', color='purple')
+ax.plot(x_atoms_shifted, z_atoms_bottom, 'o', color='orange')
 
 # Indicator lines using existing atoms
 i = 3  # index of chosen atom pair
