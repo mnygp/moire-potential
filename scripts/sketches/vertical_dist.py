@@ -38,8 +38,8 @@ x_mo = x_atoms_shifted[i]
 z_mo = z_atoms_bottom[i]
 
 # Vertical + horizontal connector
-ax.plot([x_w, x_w], [z_w, z_mo], 'k--')     # vertical
-ax.plot([x_w, x_mo], [z_mo, z_mo], 'k--')   # horizontal
+ax.plot([x_w, x_w], [z_w, z_mo], 'k--', label="Vertical distance")
+ax.plot([x_w, x_mo], [z_mo, z_mo], 'k--', alpha=0.3)
 
 # Formatting
 ax.set_title('Illustrative Side View of MoS₂/WSe₂ Layers')
