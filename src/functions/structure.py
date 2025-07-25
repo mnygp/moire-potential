@@ -3,7 +3,7 @@ from ase import Atoms
 from ase.constraints import FixedLine
 
 
-def create_bilayer(lattice_length: float, z_dist: float,
+def create_bilayer(z_dist: float, lattice_length: float = 3.2515,
                    a_shift: float = 0, b_shift: float = 0,
                    constrain: bool = False) -> Atoms:
 
