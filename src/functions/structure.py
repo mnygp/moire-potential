@@ -5,7 +5,8 @@ from ase.constraints import FixedLine
 
 def create_bilayer(z_dist: float, lattice_length: float = 3.2515,
                    a_shift: float = 0, b_shift: float = 0,
-                   constrain: bool = False) -> Atoms:
+                   constrain: bool = False,
+                   acute_corner: bool = False) -> Atoms:
 
     MoS2 = mx2('MoS2', a=lattice_length, vacuum=6.0)
     WSe2 = mx2('WSe2', a=lattice_length, vacuum=6.0)
@@ -23,10 +24,17 @@ def create_bilayer(z_dist: float, lattice_length: float = 3.2515,
                                                      atom.symbol == 'Mo')]
         struct.set_constraint(FixedLine(indices=indices, direction=[0, 0, 1]))
 
-    for atom in struct:
-        if atom.symbol == 'Mo' or atom.symbol == 'S':
-            atom.position += a_shift*struct.cell[0]
-            atom.position += b_shift*struct.cell[1]
+    if acute_corner:
+        struct.positions += struct.cell[0]
+        for atom in struct:
+            if atom.symbol == 'Mo' or atom.symbol == 'S':
+                atom.position -= a_shift * struct.cell[0]
+                atom.position += b_shift * struct.cell[1]
+    else:
+        for atom in struct:
+            if atom.symbol == 'Mo' or atom.symbol == 'S':
+                atom.position += a_shift*struct.cell[0]
+                atom.position += b_shift*struct.cell[1]
 
     struct.pbc = True
     struct.wrap()
