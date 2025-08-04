@@ -1,9 +1,7 @@
 import numpy as np
-import matplotlib
 from ase.io import read
 import functions.homo_layer_geometry as f
 from functions.plotting import contour_plot_fill
-import matplotlib.pyplot as plt
 from pathlib import Path
 
 
@@ -25,11 +23,15 @@ for i in folder_subset:
 
     top_strain_x, top_strain_y, top_strain = f.strain(atoms, "W", "top")
     print("Top strain done")
-    bottom_strain_x, bottom_strain_y, bottom_strain = f.strain(atoms, "W", "bottom")
+    bottom_strain_x, bottom_strain_y, bottom_strain = f.strain(atoms,
+                                                               "W",
+                                                               "bottom")
     print("Bottom strain done")
-    interlayer_x, interlayer_y, interlayer_dist = f.interlayer_distance(atoms, "W")
+    interlayer_x, interlayer_y, interlayer_dist = f.interlayer_distance(atoms,
+                                                                        "W")
     print("Interlayer distance done")
-    interlayer_x, interlayer_y, interlayer_dist = f.interlayer_distance(atoms, "W")
+    interlayer_x, interlayer_y, interlayer_dist = f.interlayer_distance(atoms,
+                                                                        "W")
 
     contour_plot_fill(top_strain_x, top_strain_y, top_strain*100,
                       "top_strain_" + i,
