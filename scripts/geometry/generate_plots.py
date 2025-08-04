@@ -75,7 +75,7 @@ for structure in [structure]:
 
     # Read the structure
     atoms = read(path_to_structure /
-                 str("structures/" + structure + "/structure_ml.json"))
+                 str("structures/MoS2-WSe2/" + structure + "/structure_ml.json"))
 
     # symbols = np.array(atoms.get_chemical_symbols())
     # positions = np.array(atoms.get_positions())
