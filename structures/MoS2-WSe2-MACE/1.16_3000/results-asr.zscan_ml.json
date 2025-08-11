@@ -1,0 +1,31 @@
+{
+ "object_id": "asr.core.results::ASRResult",
+ "constructor": "asr.core.results::ASRResult",
+ "args": [],
+ "kwargs": {
+  "data": {},
+  "metadata": {
+   "asr_name": "asr.zscan_ml",
+   "resources": {
+    "time": 10245.473441362381,
+    "ncores": 1,
+    "tstart": 1737986352.8063457,
+    "tend": 1737996598.279787
+   },
+   "params": {
+    "structure": "initial.json",
+    "start": 2.0,
+    "stop": 5.0,
+    "nsteps": 25,
+    "npoints": 1200
+   },
+   "code_versions": {
+    "asr": "0.4.1-da28253dc2ba721e19081c97d91e93f88d810b25",
+    "ase": "3.23.1b1-cf06a51479b38cf763f4de4fde346b0f09a6b13e",
+    "gpaw": "24.7.0b1-e69469f587cb8593a1b1c7b75cf6c99042132e1b"
+   },
+   "creates": {}
+  },
+  "strict": null
+ }
+}
