@@ -8,3 +8,4 @@ Moire_Potential.egg-info
 **/traj_files*/*
 **/atoms_files*/*
 results-asr.*
+gpaw.txt

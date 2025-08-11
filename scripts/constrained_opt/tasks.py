@@ -141,15 +141,15 @@ def return_as_dict(i: int, j: int, pre_relax: float,
 def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
     rows = []
     for name, d in results_dict.items():
-        x = d['x']
-        y = d['y']
+        x = d['x_shift']
+        y = d['y_shift']
         cx = d['center'][0]
         cy = d['center'][1]
         pre_relax = d['pre']
-        post_relax_no_strain = d['gap post no strain']
+        post_relax_no_strain = d['post no strain']
         dist_no_strain = d['distance no strain']
-        post_relax_with_strain = d['gap post with strain']
-        dist_with_strain = d['distance no strain']
+        post_relax_with_strain = d['post with strain']
+        dist_with_strain = d['distance with strain']
         z_dist_ml = d['z distance ml']
 
         rows.append({
@@ -157,7 +157,7 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
             "y": y,
             "center x": cx,
             "center y": cy,
-            "gap pre": pre_relax,
+            "gap pre relax": pre_relax,
             "gap post no strain": post_relax_no_strain,
             "dist no strain": dist_no_strain,
             "gap post with strain": post_relax_with_strain,
