@@ -236,12 +236,12 @@ def relaxation(atom_path: str, i: int, j: int, fixed_cell: bool) -> Path:
         opt = atoms
         traj_path = root + '/traj_files_no_strain/' + traj_name
     else:
-        # mask makes it so the unitcell is only optimised in x and y
+        # mask makes it so the unitcell is only optimised in x, y and xy
         opt = UnitCellFilter(atoms, mask=[1, 1, 0, 0, 0, 1])
         traj_path = root + '/traj_files_with_strain/' + traj_name
 
     relax = BFGS(opt, trajectory=traj_path)
-    relax.run(fmax=0.01)
+    relax.run(fmax=0.02)
 
     folder_path = root + '/atoms_files_post_relax/'
     file_name = f'MoS2WSe2_{i:.3f}_{j:.3f}_relaxed.traj'
