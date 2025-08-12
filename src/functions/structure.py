@@ -6,7 +6,7 @@ from ase.constraints import FixedLine
 def create_bilayer(z_dist: float, lattice_length: float = 3.2515,
                    a_shift: float = 0, b_shift: float = 0,
                    constrain: bool = False,
-                   acute_corner: bool = False) -> Atoms:
+                   acute_corner: bool = True) -> Atoms:
 
     MoS2 = mx2('MoS2', a=lattice_length, vacuum=6.0)
     WSe2 = mx2('WSe2', a=lattice_length, vacuum=6.0)
