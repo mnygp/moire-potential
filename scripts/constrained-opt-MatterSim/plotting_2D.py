@@ -75,3 +75,6 @@ scatter_plot(dist_ml - dist_cell_opt,
 scatter_plot(dist_ml - dist_no_cell_opt,
              "Z-distance: ML minus not cell optimized relaxation",
              "Z-distance [Å]", "z_distance_ml_no_cell_opt")
+scatter_plot(dist_cell_opt,
+             "Z-distance: After cell optimized relaxation",
+             "Z-distance [Å]", "z_distance_cell_opt")

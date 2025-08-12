@@ -5,7 +5,7 @@ from ase.io import read
 data = np.loadtxt('tree/write_csv_task/results.csv',
                   delimiter=',', skiprows=1)
 
-atoms = read('../../structures/1.05_3027/structure_ml.json')
+atoms = read('../../structures/MoS2-WSe2-MACE/1.05_3027/structure_ml.json')
 
 cell = atoms.get_cell()[:2, :2]
 
@@ -75,3 +75,6 @@ scatter_plot(dist_ml - dist_cell_opt,
 scatter_plot(dist_ml - dist_no_cell_opt,
              "Z-distance: ML minus not cell optimized relaxation",
              "Z-distance [Å]", "z_distance_ml_no_cell_opt")
+scatter_plot(dist_cell_opt,
+             "Z-distance: After cell optimized relaxation",
+             "Z-distance [Å]", "z_distance_cell_opt")
