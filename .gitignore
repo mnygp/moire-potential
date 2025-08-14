@@ -6,6 +6,7 @@ __pycache__/
 **/.taskblaster
 Moire_Potential.egg-info
 **/traj_files*/*
+**/gpw_files*/*
 **/atoms_files*/*
 results-asr.*
 gpaw.txt
