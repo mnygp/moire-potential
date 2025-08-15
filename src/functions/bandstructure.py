@@ -4,6 +4,7 @@ from gpaw import GPAW, PW, FermiDirac
 from pathlib import Path
 import numpy as np
 
+
 def calc_gap(atom_path: Path | Atoms, functional: str = "PBE",
              kpts: int = 18, pw_cut: float = 500) -> float:
 
