@@ -13,7 +13,7 @@ WSe2_lattice = 3.319
 
 nkpts = 26
 
-strain = np.linspace(0.995, 1.005, 21, endpoint=True)
+strain = np.linspace(0.96, 1.04, 31, endpoint=True)
 MoS2_homo = []
 MoS2_lumo = []
 WSe2_homo = []

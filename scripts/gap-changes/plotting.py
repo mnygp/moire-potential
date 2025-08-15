@@ -1,19 +1,38 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.genfromtxt('band_edges.csv', skip_header=1, dtype=float, delimiter=',')
+data = np.genfromtxt('band_edges_wide.csv', skip_header=1,
+                     dtype=float, delimiter=',')
 
-# 0: Strain
-# 1: MoS2_homo
-# 2: MoS2_lumo
-# 3: WSe2_homo
-# 4: WSe2_lumo
+strain = (data[:, 0] - 1)*100
+MoS2_homo = data[:, 1]
+MoS2_lumo = data[:, 2]
+WSe2_homo = data[:, 3]
+WSe2_lumo = data[:, 4]
 
 
-plt.plot(data[:, 0], data[:, 1], '-o', label='MoS2 Homo')
-plt.plot(data[:, 0], data[:, 2], '-o', label='MoS2 Lumo')
-plt.plot(data[:, 0], data[:, 3], '-o', label='WSe2 Homo')
-plt.plot(data[:, 0], data[:, 4], '-o', label='WSe2 Lumo')
+plt.plot(strain, MoS2_homo, '-o', label='MoS2 Homo')
+plt.plot(strain, MoS2_lumo, '-o', label='MoS2 Lumo')
+plt.plot(strain, WSe2_homo, '-o', label='WSe2 Homo')
+plt.plot(strain, WSe2_lumo, '-o', label='WSe2 Lumo')
+plt.xlabel("Layer strain [%]")
+plt.ylabel("Energy [eV]")
+plt.title("HOMO and LUMO energy levels")
 plt.legend()
 plt.grid()
 plt.savefig('Homo-lumo-strain.png', dpi=500)
+plt.close()
+
+lumo_grid, homo_grid = np.meshgrid(MoS2_lumo, WSe2_homo)
+
+band_gap_grid = lumo_grid - homo_grid
+
+im = plt.imshow(band_gap_grid, extent=(strain[0], strain[-1],
+                                       strain[0], strain[-1]),
+                origin="lower")
+plt.xlabel("MoS2 strain [%]")
+plt.ylabel("WSe2 strain [%]")
+plt.title("Band gap as a function of layer strain")
+plt.colorbar(im, label="Band Gap (eV)")
+plt.tight_layout()
+plt.savefig("band-gap-grid.png", dpi=500)
