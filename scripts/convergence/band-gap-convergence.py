@@ -10,7 +10,7 @@ for z in [6.3, 6.5, 6.8]:
         parprint("Shift:", shift)
 
         for k in kpts:
-            bilayer = create_bilayer(z_dist=6.6, constrain=True,
+            bilayer = create_bilayer(z_dist=z, constrain=True,
                                      a_shift=shift, b_shift=shift)
 
             gap = calc_gap(bilayer, kpts=k)
