@@ -9,23 +9,26 @@ fig, ax = plt.subplots(2, 1, figsize=(6, 4.5), sharex=True,
 fig2, ax2 = plt.subplots(2, 1, figsize=(6, 4.5), sharex=True,
                          gridspec_kw={'height_ratios': [1, 2]})
 
-for a, color, label in zip([3.184, 3.2515, 3.319],
-                           ['C0', 'C1', 'C2'],
-                           ['a=MoS2', 'a=Average', 'a=WSe2']):
+lattice = np.linspace(3.184, 3.319, 7)
+
+for a, color, label in zip(lattice,
+                           ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6'],
+                           ['3.18', '3.21', '3.23', '3.25',
+                            '3.27', '3.30', '3.32']):
     data = np.loadtxt(f'gap_shift_{a:.2f}.csv', delimiter=',', skiprows=1)
 
     shift_arr = data[:, 0]
     z_dist_arr = data[:, 1]
     gap_arr = data[:, 2]
 
-    ax[0].plot(shift_arr, gap_arr - min(gap_arr), '-o',
+    ax[0].plot(shift_arr, gap_arr - min(gap_arr), '-o', markersize=4,
                label=label, color=color)
-    ax[1].plot(shift_arr, z_dist_arr, '-o',
+    ax[1].plot(shift_arr, z_dist_arr, '-o', markersize=4,
                label=label, color=color)
 
-    ax2[0].plot(shift_arr, gap_arr, '-o',
+    ax2[0].plot(shift_arr, gap_arr, '-o',  markersize=4,
                 label=label, color=color)
-    ax2[1].plot(shift_arr, z_dist_arr, '-o',
+    ax2[1].plot(shift_arr, z_dist_arr, '-o', markersize=4,
                 label=label, color=color)
 
 

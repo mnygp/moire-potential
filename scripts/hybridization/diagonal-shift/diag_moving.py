@@ -7,7 +7,9 @@ from functions.structure import create_bilayer
 import numpy as np
 import csv
 
-for a in [3.184, 3.2515, 3.319]:  # MoS2, average and WSe2 lattice constants
+# [3.184, 3.2515, 3.319]  MoS2, average and WSe2 lattice constants
+
+for a in np.linspace(3.184, 3.319, 7):
 
     shift_arr = np.linspace(0, 1, 30)
     z_dist_arr: list[float] = []
