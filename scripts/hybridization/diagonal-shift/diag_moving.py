@@ -24,6 +24,7 @@ for a in np.linspace(3.184, 3.319, 7):
         calc = GPAW(mode=PW(500),
                     xc='PBE',
                     kpts={'size': (12, 12, 1)},
+                    symmetry='off',
                     txt='gpaw.txt')
         d3_calc = DFTD3(dft=calc)
         struct.calc = d3_calc
