@@ -2,6 +2,7 @@ __pycache__/
 *.err
 *.out
 *.png
+*.gpw
 **/tree/
 **/.taskblaster
 Moire_Potential.egg-info
