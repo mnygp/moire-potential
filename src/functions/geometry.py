@@ -1,10 +1,13 @@
 import numpy as np
 import warnings
-from functions.util import closest_index, repeate_cells
+from functions.util import closest_index, repeate_cells, get_cells, get_atom_obj
 from ase import Atoms
-
+from ase.io import write
+import os
 
 def height(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculate the height of the top chalcogen layer relative to the
+    bottom chalcogen layer."""
     symbols = np.array(atoms.get_chemical_symbols())
     positions = np.array(atoms.get_positions())
     cell = np.array(atoms.get_cell())
@@ -37,7 +40,8 @@ def height(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 def horizontal_distance(atoms: Atoms) -> tuple[np.ndarray,
                                                np.ndarray,
                                                np.ndarray]:
-
+    """Calculate the horizontal distance between the two middle chalcogen
+    layers."""
     symbols = np.array(atoms.get_chemical_symbols())
     positions = np.array(atoms.get_positions())
     cell = np.array(atoms.get_cell())
@@ -73,6 +77,8 @@ def horizontal_distance(atoms: Atoms) -> tuple[np.ndarray,
 
 
 def modified_h_dist(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculate a modified horizontal distance for the transition metal
+    layer."""
     symbols = np.array(atoms.get_chemical_symbols())
     positions = np.array(atoms.get_positions())
     cell = np.array(atoms.get_cell())
@@ -107,7 +113,7 @@ def modified_h_dist(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 def strain(atoms: Atoms, atom_type: str) -> tuple[np.ndarray,
                                                   np.ndarray,
                                                   np.ndarray]:
-
+    """Calculate the local strain for the given transition metal atom type."""
     if (atom_type not in ['W', 'Mo']):
         raise ValueError("Input not a valid atom type."
                          + " Choose either 'W' or 'Mo'.")
@@ -161,7 +167,7 @@ def strain(atoms: Atoms, atom_type: str) -> tuple[np.ndarray,
 def layer_thicknsess(atoms: Atoms, atom_type: str) -> tuple[np.ndarray,
                                                             np.ndarray,
                                                             np.ndarray]:
-
+    """Calculate the thickness of the given chalcogen layer."""
     if (atom_type not in ['S', 'Se']):
         raise ValueError("Input not a valid atom type."
                          + " Choose either 'S' or 'Se'.")
@@ -195,7 +201,9 @@ def layer_thicknsess(atoms: Atoms, atom_type: str) -> tuple[np.ndarray,
 def interlayer_distance(atoms: Atoms) -> tuple[np.ndarray,
                                                np.ndarray,
                                                np.ndarray]:
-
+    """Calculate the interlayer distance between the two transition metal
+    layers."""
+    
     symbols = np.array(atoms.get_chemical_symbols())
     positions = np.array(atoms.get_positions())
     cell = np.array(atoms.get_cell())
@@ -216,3 +224,56 @@ def interlayer_distance(atoms: Atoms) -> tuple[np.ndarray,
         pos[2] = z_distance
 
     return Mo_atoms[:, 0], Mo_atoms[:, 1], Mo_atoms[:, 2]
+
+
+def get_shifts(atoms: Atoms) -> dict[str, list[list[float]]]:
+
+    v1_arr, v2_arr, origins = get_cells(atoms)
+    atoms_arr, cell_center = get_atom_obj(atoms, origins, v1_arr, v2_arr)
+
+    x = []
+    y = []
+    z_dist_arr = []
+
+    for a, o in zip(atoms_arr, origins):
+        a.wrap()
+        cell_vectors = a.cell[:2, :2]
+        Mo_postion = a.positions[a.get_chemical_symbols().index('Mo')]
+        W_postion = a.positions[a.get_chemical_symbols().index('W')]
+
+        z_dist = abs(W_postion[2] - Mo_postion[2])
+        z_dist_arr.append(z_dist)
+
+        crystal_pos = np.linalg.solve(cell_vectors.T, Mo_postion[:2])
+        x.append(crystal_pos[0])
+        y.append(crystal_pos[1])
+
+    combined = np.stack((x, y), axis=-1)
+
+    return {'shifts': combined,
+            'origins': origins,
+            'z distance': z_dist_arr}  # type:ignore
+
+
+def diagonal_shift(atoms: Atoms):
+    """Calculate the diagonal shift between the two transition metal layers."""
+    
+    v1_array, v2_array, origins = get_cells(atoms)
+    atoms_array, cell_center = get_atom_obj(atoms, origins, v1_array, v2_array)
+
+    diag_shifts = np.zeros(len(atoms_array))
+
+    os.makedirs("atoms_files", exist_ok=True)
+
+    for i in range(len(atoms_array)):
+        subcell = atoms_array[i]
+        subcell.wrap()
+        Mo_pos = subcell.positions[subcell.symbols == "Mo"][0]
+
+        xy_dist = np.sqrt((Mo_pos[0])**2 + (Mo_pos[1])**2)  # W at (0,0)
+        
+        diag_shifts[i] = xy_dist / np.linalg.norm(v1_array[i] + v2_array[i])
+
+        write(f"atoms_files/atom_{origins[i,0]:.2f}_{origins[i,1]:.2f}_{xy_dist:.2f}.xyz", subcell)
+        
+    return origins, cell_center, diag_shifts

@@ -106,7 +106,6 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     rot_matrix = np.array([[0.5, -np.sqrt(3)/2, 0],
                            [np.sqrt(3)/2, 0.5, 0],
                            [0, 0, 1]])
-
     approx_v2 = rot_matrix@approx_v1
 
     v1_arr = np.array([])

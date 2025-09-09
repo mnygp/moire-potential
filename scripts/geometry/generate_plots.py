@@ -1,6 +1,6 @@
 import numpy as np
 from ase.io import read
-import functions.heat_map as f
+import functions.geometry as f
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -23,7 +23,7 @@ def contour_plot_fill(X: np.ndarray, Y: np.ndarray, Z: np.ndarray,
         ax.text(0.03, 0.17, text, transform=ax.transAxes, fontsize=9,
                 verticalalignment='top')
 
-    fig.savefig("plots/" + filename + ".png", dpi=300,
+    fig.savefig("plots-MatterSim/" + filename + ".png", dpi=300,
                 bbox_inches='tight')
     plt.close(fig)
 
@@ -48,7 +48,7 @@ def contour_plot(X: np.ndarray, Y: np.ndarray, Z: np.ndarray,
         ax.text(0.03, 0.17, text, transform=ax.transAxes, fontsize=9,
                 verticalalignment='top')
 
-    fig.savefig("plots/" + filename + ".png", dpi=300,
+    fig.savefig("plots-MatterSim/" + filename + ".png", dpi=300,
                 bbox_inches='tight')
     plt.close(fig)
 
@@ -184,15 +184,22 @@ for structure in [structure]:
                  "gist_earth", "Average Displacement [%]",
                  strings=text, levels=5)
 
-    # Calculate the thickness of the Se layer
-    Mo_x, Mo_y, Mo_mod_shift = f.modified_h_dist(atoms)
-    # Mo_x, Mo_y, Mo_mod_shift = f.repeate_cells(Se_x, Se_y, Se_thickness,
-    #                                           range(-1, 2), vector1, vector2)
+    shift_dict = f.get_shifts(atoms)
+    diag_shifts = np.linalg.norm(shift_dict['shifts'], axis=1)
+    x_shifts = shift_dict['shifts'][:, 0]
+    y_shifts = shift_dict['shifts'][:, 1]
 
-    contour_plot_fill(Mo_x, Mo_y, Mo_mod_shift,
-                      "Mo_modified_shift_map_" + structure,
-                      "Amount of shift",
-                      "RdGy", "Shift procentage", strings=text)
+    plt.scatter(shift_dict['origins'][:, 0], shift_dict['origins'][:, 1],
+                c=y_shifts, cmap='viridis', s=40)
+    plt.colorbar(label="Data value")
+    plt.xlabel("X position")
+    plt.ylabel("Y position")
+    plt.title("2D Scatter Plot with y shift")
+    plt.axis("equal")
+    plt.grid()
+    plt.savefig("plots-MatterSim/" + "scatter_map_y_shift_" + structure + ".png",
+                dpi=300, bbox_inches='tight')
+
 
     print(f"({counter}/{number_of_structures}): {structure}"
           + " calculation completed. Strain"

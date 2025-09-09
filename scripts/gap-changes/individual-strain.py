@@ -13,7 +13,7 @@ WSe2_lattice = 3.319
 
 nkpts = 26
 
-strain = np.linspace(0.96, 1.04, 31, endpoint=True)
+strain = np.linspace(0.98, 1.02, 51, endpoint=True)
 MoS2_homo = []
 MoS2_lumo = []
 WSe2_homo = []
@@ -57,7 +57,7 @@ for i in strain:
     parprint('---------------------------------------------')
 
 
-with open('band_edges.csv', mode='w', newline='') as f:
+with open('band_edges_medium.csv', mode='w', newline='') as f:
     writer = csv.writer(f)
     # Header row
     writer.writerow(['strain', 'MoS2_homo', 'MoS2_lumo',
