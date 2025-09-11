@@ -15,6 +15,7 @@ for a, color, label in zip(lattice,
                            ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6'],
                            ['3.18', '3.21', '3.23', '3.25',
                             '3.27', '3.30', '3.32']):
+    
     data = np.loadtxt(f'gap_shift_{a:.2f}.csv', delimiter=',', skiprows=1)
 
     shift_arr = data[:, 0]

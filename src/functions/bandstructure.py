@@ -6,7 +6,7 @@ import numpy as np
 
 
 def calc_gap(atom_path: Path | Atoms, functional: str = "PBE",
-             kpts: int = 18, pw_cut: float = 500) -> float:
+             kpts: int = 18, pw_cut: float = 500) -> tuple[float, float, float]:
 
     if isinstance(atom_path, Path):
         atoms = read(atom_path)
@@ -19,14 +19,14 @@ def calc_gap(atom_path: Path | Atoms, functional: str = "PBE",
                 xc=functional,  # Functional
                 kpts={'size': (kpts, kpts, 1)},  # k-points
                 occupations=FermiDirac(0.01),
-                txt='gpaw_output.gpw')
+                txt=None)
 
     atoms.calc = calc
     atoms.get_potential_energy()
 
     homo, lumo = calc.get_homo_lumo()
 
-    return lumo - homo
+    return lumo - homo, lumo, homo
 
 
 def get_vacuum_and_band_edges(gpw_file: str):

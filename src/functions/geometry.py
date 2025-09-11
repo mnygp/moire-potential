@@ -212,18 +212,18 @@ def interlayer_distance(atoms: Atoms) -> tuple[np.ndarray,
     Mo_atoms = positions[symbols == "Mo"]
     W_atoms = positions[symbols == "W"]
 
-    x, y, z = repeate_cells(W_atoms[:, 0], W_atoms[:, 1], W_atoms[:, 2],
+    x, y, z = repeate_cells(Mo_atoms[:, 0], Mo_atoms[:, 1], Mo_atoms[:, 2],
                             range(-1, 2), vector1, vector2)
 
-    W_large = np.array([x, y, z]).T
+    Mo_large = np.array([x, y, z]).T
 
-    for pos in Mo_atoms:
-        close = closest_index(pos, W_large)
-        closest_particle = W_large[close]
+    for pos in W_atoms:
+        close = closest_index(pos, Mo_large)
+        closest_particle = Mo_large[close]
         z_distance = abs(pos[2] - closest_particle[2])
         pos[2] = z_distance
 
-    return Mo_atoms[:, 0], Mo_atoms[:, 1], Mo_atoms[:, 2]
+    return W_atoms[:, 0], W_atoms[:, 1], W_atoms[:, 2]
 
 
 def get_shifts(atoms: Atoms) -> dict[str, list[list[float]]]:

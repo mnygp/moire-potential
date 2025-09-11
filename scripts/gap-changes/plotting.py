@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.genfromtxt('band_edges_wide.csv', skip_header=1,
+data = np.genfromtxt('band_edges_medium.csv', skip_header=1,
                      dtype=float, delimiter=',')
 
 strain = (data[:, 0] - 1)*100
@@ -20,7 +20,7 @@ plt.ylabel("Energy [eV]")
 plt.title("HOMO and LUMO energy levels")
 plt.legend()
 plt.grid()
-plt.savefig('Homo-lumo-strain.png', dpi=500)
+plt.savefig('Homo-lumo-strain-medium.png', dpi=500)
 plt.close()
 
 lumo_grid, homo_grid = np.meshgrid(MoS2_lumo, WSe2_homo)
@@ -35,4 +35,4 @@ plt.ylabel("WSe2 strain [%]")
 plt.title("Band gap as a function of layer strain")
 plt.colorbar(im, label="Band Gap (eV)")
 plt.tight_layout()
-plt.savefig("band-gap-grid.png", dpi=500)
+plt.savefig("band-gap-grid-medium.png", dpi=500)
