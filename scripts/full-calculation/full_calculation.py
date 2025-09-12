@@ -61,7 +61,7 @@ for i in range(len(x_WSe2)):
     d3_calc = DFTD3(dft=calc)
     bilayer.calc = d3_calc
 
-    # Constrain the metal 
+    # Constrain the metal
     c = FixAtoms(indices=[atom.index for atom in bilayer
                           if (atom.symbol == 'Mo' or atom.symbol == 'W')])
     bilayer.set_constraint(c)
@@ -126,11 +126,12 @@ for i in range(len(x_WSe2)):
     WSe2_strain_val = parameters['WSe2_strain'][i]
 
     x_val = parameters['x'][i]
-    y_val = parameters['x'][i]
+    y_val = parameters['y'][i]
 
     MoS2_strain_val = MoS2_strain_intp([x_val], [y_val])[0]
 
-    new_gap = strain_correction_interp([MoS2_strain_val], [WSe2_strain_val])[0]
+    new_gap = strain_correction_interp([MoS2_strain_val + 1],
+                                       [WSe2_strain_val + 1])[0]
     gap_correction = new_gap - ref_gap
 
     corrected_gap.append(raw_gap[i] + gap_correction)
