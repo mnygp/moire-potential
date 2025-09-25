@@ -61,3 +61,28 @@ def get_vacuum_and_band_edges(gpw_file: str):
         "lumo": lumo_rel,
         "bandgap": lumo - homo
     }
+
+
+def soc_band_gap(atom_path: Path | Atoms, functional: str = "PBE",
+                 kpts: int = 18, pw_cut: float = 500):
+
+    calc = GPAW(mode=PW(pw_cut),
+                xc=functional,
+                setups={'W': '6'},
+                occupations=FermiDirac(width=0.01),
+                kpts=(kpts, kpts, 1),
+                txt=None)
+
+    if isinstance(atom_path, Path):
+        atoms = read(atom_path)
+    elif isinstance(atom_path, Atoms):
+        atoms = atom_path
+    else:
+        raise TypeError("atom_path must be a Path or Atoms object")
+
+    atoms.calc = calc
+    atoms.get_potential_energy()
+
+    ef = atoms.calc.get_fermi_level()
+
+    atoms.calc.fixed_density()
