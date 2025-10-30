@@ -1,8 +1,10 @@
 __pycache__/
 *.err
 *.out
+*.log
 *.png
 *.gpw
+*.traj
 **/tree/
 **/.taskblaster
 Moire_Potential.egg-info
@@ -12,3 +14,5 @@ Moire_Potential.egg-info
 **/test**
 results-asr.*
 gpaw.txt
+dftd3_*
+ase_dftd3*
