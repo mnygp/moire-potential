@@ -13,7 +13,7 @@ WSe2_lattice = 3.319
 
 nkpts = 26
 
-strain = np.linspace(0.98, 1.02, 51, endpoint=True)
+strain = np.linspace(0.98, 1.02, 25, endpoint=True)
 MoS2_homo = []
 MoS2_lumo = []
 WSe2_homo = []
@@ -28,14 +28,16 @@ for i in strain:
                                kpts={'size': (nkpts, nkpts, 1)},
                                occupations=FermiDirac(0.01),
                                txt=None))
-    opt = BFGS(MoS2, trajectory=f'traj_files/opt_MoS2_{(i-1)*100:.2f}.traj')
-    opt.run(fmax=0.02)
+    file_Mo = f'MoS2_{(i-1)*100:.2f}'
+    opt = BFGS(MoS2, trajectory=f'traj_files/opt_{file_Mo}.traj')
+    opt.run(fmax=0.01)
     MoS2.calc.get_potential_energy()
-    MoS2.calc.dft.write(f'gpw_files/MoS2_{(i-1)*100:.2f}.gpw', mode='all')
+    MoS2.calc.dft.write(f'gpw_files/{file_Mo}.gpw',  # pyright: ignore
+                        mode='all')
 
-    MoS2_dict = get_vacuum_and_band_edges(f'gpw_files/MoS2_{(i-1)*100:.2f}.gpw')
-    MoS2_homo.append(MoS2_dict['homo'])
-    MoS2_lumo.append(MoS2_dict['lumo'])
+    MoS2_dict = get_vacuum_and_band_edges(f'gpw_files/{file_Mo}.gpw', soc=True)
+    MoS2_homo.append(MoS2_dict['homo'] - MoS2_dict['vacuum_level'])
+    MoS2_lumo.append(MoS2_dict['lumo'] - MoS2_dict['vacuum_level'])
     parprint('MoS2 done')
 
     WSe2 = mx2('WSe2', a=WSe2_lattice*i, vacuum=10.0)
@@ -44,20 +46,22 @@ for i in strain:
                                kpts={'size': (nkpts, nkpts, 1)},
                                occupations=FermiDirac(0.01),
                                txt=None))
-    opt = BFGS(WSe2, trajectory=f'traj_files/opt_WSe2_{(i-1)*100:.2f}.traj')
-    opt.run(fmax=0.02)
+    file_W = f'WSe2_{(i-1)*100:.2f}'
+    opt = BFGS(WSe2, trajectory=f'traj_files/opt_{file_W}.traj')
+    opt.run(fmax=0.01)
     WSe2.calc.get_potential_energy()
-    WSe2.calc.dft.write(f'gpw_files/WSe2_{(i-1)*100:.2f}.gpw', mode='all')
+    WSe2.calc.dft.write(f'gpw_files/{file_W}.gpw',  # pyright: ignore
+                        mode='all')
 
-    WSe2_dict = get_vacuum_and_band_edges(f'gpw_files/WSe2_{(i-1)*100:.2f}.gpw')
-    WSe2_homo.append(WSe2_dict['homo'])
-    WSe2_lumo.append(WSe2_dict['lumo'])
+    WSe2_dict = get_vacuum_and_band_edges(f'gpw_files/{file_W}.gpw', soc=True)
+    WSe2_homo.append(WSe2_dict['homo'] - WSe2_dict['vacuum_level'])
+    WSe2_lumo.append(WSe2_dict['lumo'] - WSe2_dict['vacuum_level'])
     parprint('WSe2 done')
     parprint(f'Strain {(i-1)*100:.2f} done')
     parprint('---------------------------------------------')
 
 
-with open('band_edges_medium.csv', mode='w', newline='') as f:
+with open('band_edges_medium_soc.csv', mode='w', newline='') as f:
     writer = csv.writer(f)
     # Header row
     writer.writerow(['strain', 'MoS2_homo', 'MoS2_lumo',
