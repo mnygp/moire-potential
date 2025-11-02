@@ -3,10 +3,12 @@ from ase import Atoms
 from pathlib import Path
 
 
-def closest_index(position: np.ndarray,
-                  particles: np.ndarray,
-                  index: int = 0,
-                  twoD: bool = True) -> int:
+def closest_index(
+    position: np.ndarray,
+    particles: np.ndarray,
+    index: int = 0,
+    twoD: bool = True
+) -> int:
     if twoD:
         r_diff = particles[:, :2] - position[:2]
     else:
@@ -17,12 +19,14 @@ def closest_index(position: np.ndarray,
     return np.argsort(distances)[index]
 
 
-def repeate_cells(x: np.ndarray, y: np.ndarray, data: np.ndarray,
-                  n_cells: range, vector1: np.ndarray,
-                  vector2: np.ndarray) -> tuple[np.ndarray,
-                                                np.ndarray,
-                                                np.ndarray]:
-
+def repeate_cells(
+    x: np.ndarray,
+    y: np.ndarray,
+    data: np.ndarray,
+    n_cells: range,
+    vector1: np.ndarray,
+    vector2: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # data_original = data.copy()
     x_original = x.copy()
     y_original = y.copy()
@@ -34,8 +38,8 @@ def repeate_cells(x: np.ndarray, y: np.ndarray, data: np.ndarray,
                 continue
 
             data = np.concatenate((data, data_original), axis=0)
-            new_x = x_original + i*vector1[0] + j*vector2[0]
-            new_y = y_original + i*vector1[1] + j*vector2[1]
+            new_x = x_original + i * vector1[0] + j * vector2[0]
+            new_y = y_original + i * vector1[1] + j * vector2[1]
             x = np.concatenate((x, new_x), axis=0)
             y = np.concatenate((y, new_y), axis=0)
 
@@ -54,16 +58,15 @@ def check_formula(chemicals: np.ndarray):
 
 
 def add_distance(atoms: Atoms, distance: float) -> Atoms:
-
     positions = atoms.positions
     average_z = np.mean(positions[:, 2], axis=0)
 
     # Move the atoms above the center of mass up and below down
     for i in range(len(positions)):
         if positions[i, 2] > average_z:
-            positions[i, 2] += distance/2
+            positions[i, 2] += distance / 2
         else:
-            positions[i, 2] -= distance/2
+            positions[i, 2] -= distance / 2
 
     atoms.cell[2, 2] += distance
     atoms.center(axis=2)
@@ -75,7 +78,7 @@ def dist(a: np.ndarray, b: np.ndarray, twoD: bool = True) -> float:
     if twoD:
         a = a[:2]
         b = b[:2]
-    return np.sqrt(np.sum((a - b)**2))
+    return np.sqrt(np.sum((a - b) ** 2))
 
 
 def get_root_path(directory: str) -> str | None:
@@ -86,16 +89,18 @@ def get_root_path(directory: str) -> str | None:
         if parent.name == directory:
             return str(parent)
     else:
-        raise FileNotFoundError("Could not find a directory" +
-                                f"named {directory} in the" +
-                                f" path {current_path}")
+        raise FileNotFoundError(
+            "Could not find a directory"
+            + f"named {directory} in the"
+            + f" path {current_path}"
+        )
 
 
 def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     atoms_L = atoms.repeat((3, 3, 1))
 
     W_pos = atoms.positions[atoms.symbols == "W"]
-    W_pos += (atoms.cell[0] + atoms.cell[1])  # Shift W positions to the middle
+    W_pos += atoms.cell[0] + atoms.cell[1]  # Shift W positions to the middle
     # of the 3x3 supercell
 
     W_L_pos = atoms_L.positions[atoms_L.symbols == "W"]
@@ -103,10 +108,10 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # Find the first W position and calculate the approximate vectors
     # for the small cell. The second vector is rotated by 60 degrees
     approx_v1 = W_pos[closest_index(W_pos[0], W_pos, index=1)] - W_pos[0]
-    rot_matrix = np.array([[0.5, -np.sqrt(3)/2, 0],
-                           [np.sqrt(3)/2, 0.5, 0],
-                           [0, 0, 1]])
-    approx_v2 = rot_matrix@approx_v1
+    rot_matrix = np.array(
+        [[0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, 0.5, 0], [0, 0, 1]]
+    )
+    approx_v2 = rot_matrix @ approx_v1
 
     v1_arr = np.array([])
     v2_arr = np.array([])
@@ -117,8 +122,8 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         v1_end = W_L_pos[closest_index(pos + approx_v1, W_L_pos)]
         v2_end = W_L_pos[closest_index(pos + approx_v2, W_L_pos)]
 
-        v1 = (v1_end - pos)*0.999
-        v2 = (v2_end - pos)*0.999
+        v1 = (v1_end - pos) * 0.999
+        v2 = (v2_end - pos) * 0.999
 
         v1_arr = np.append(v1_arr, v1)
         v2_arr = np.append(v2_arr, v2)
@@ -135,9 +140,9 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return v1_arr, v2_arr, origins
 
 
-def get_atom_obj(atoms: Atoms, origins: np.ndarray,
-                 v1: np.ndarray, v2: np.ndarray) -> tuple[list[Atoms],
-                                                          np.ndarray]:
+def get_atom_obj(
+    atoms: Atoms, origins: np.ndarray, v1: np.ndarray, v2: np.ndarray
+) -> tuple[list[Atoms], np.ndarray]:
     # A function that takes the atoms object and the origins,
     # v1 and v2 vectors and returns a list of atoms objects
     # that are the small cells of the moire pattern.
@@ -148,7 +153,7 @@ def get_atom_obj(atoms: Atoms, origins: np.ndarray,
     atoms_L = atoms.repeat((3, 3, 1))
     atoms_L_pos = atoms_L.positions
 
-    origins += (moire_v1 + moire_v2)
+    origins += moire_v1 + moire_v2
 
     V = np.stack((v1[:, :2], v2[:, :2]), axis=-1)
     V_inv = np.linalg.inv(V)
@@ -165,10 +170,12 @@ def get_atom_obj(atoms: Atoms, origins: np.ndarray,
     for i in range(np.shape(coeffs)[1]):
         atoms_cell = Atoms()
         atom_coeffs = coeffs[:, i, :]
-        inside_cell_indices = np.where(np.all(atom_coeffs >= 0, axis=1)
-                                       & np.all(atom_coeffs < 1, axis=1))
+        inside_cell_indices = np.where(
+            np.all(atom_coeffs >= 0, axis=1) & np.all(atom_coeffs < 1, axis=1)
+        )
 
-        center_of_cell = v1[i]/2 + v2[i]/2 + origins[i] - (moire_v1 + moire_v2)
+        center_of_cell = (v1[i] / 2 + v2[i] / 2
+                          + origins[i] - (moire_v1 + moire_v2))
 
         for j in inside_cell_indices:
             atoms_cell += atoms_L[j]
@@ -187,7 +194,7 @@ def get_atom_obj(atoms: Atoms, origins: np.ndarray,
 
 
 def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
-    chemical_number = {'Mo': 1, 'W': 1, 'S': 2, 'Se': 2}
+    chemical_number = {"Mo": 1, "W": 1, "S": 2, "Se": 2}
 
     while not check_formula(atoms.get_chemical_symbols()):
         for atom_type in chemical_number.keys():
@@ -198,12 +205,12 @@ def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
                 # For S and Se, if there are 3 atoms, we want to keep
                 # the pair of atoms that are above each other
                 # and remove the one that is isolated
-                if len(indices) == 3 and (atom_type == 'S'
-                                          or atom_type == 'Se'):
+                if len(indices) == 3 and (atom_type == "S" or atom_type == "Se"):
                     remove_isolated(atoms, indices)
                 else:
-                    distances = np.array([dist(atoms.positions[i], origin)
-                                          for i in indices])
+                    distances = np.array(
+                        [dist(atoms.positions[i], origin) for i in indices]
+                    )
 
                     furthest_index = indices[np.argmax(distances)]
                     del atoms[furthest_index]

@@ -1,12 +1,17 @@
 from ase.io import read
 from ase import Atoms
 from gpaw import GPAW, PW, FermiDirac
+from gpaw.spinorbit import soc_eigenstates
 from pathlib import Path
 import numpy as np
 
 
-def calc_gap(atom_path: Path | Atoms, functional: str = "PBE",
-             kpts: int = 18, pw_cut: float = 500) -> tuple[float, float, float]:
+def calc_gap(
+    atom_path: Path | Atoms,
+    functional: str = "PBE",
+    kpts: int = 18,
+    pw_cut: float = 500,
+) -> tuple[float, float, float]:
 
     if isinstance(atom_path, Path):
         atoms = read(atom_path)
@@ -15,11 +20,13 @@ def calc_gap(atom_path: Path | Atoms, functional: str = "PBE",
     else:
         raise TypeError("atom_path must be a Path or Atoms object")
 
-    calc = GPAW(mode=PW(pw_cut),  # Basis set
-                xc=functional,  # Functional
-                kpts={'size': (kpts, kpts, 1)},  # k-points
-                occupations=FermiDirac(0.01),
-                txt=None)
+    calc = GPAW(
+        mode=PW(pw_cut),  # Basis set
+        xc=functional,  # Functional
+        kpts={"size": (kpts, kpts, 1)},  # k-points
+        occupations=FermiDirac(0.01),
+        txt=None,
+    )
 
     atoms.calc = calc
     atoms.get_potential_energy()
@@ -59,20 +66,16 @@ def get_vacuum_and_band_edges(gpw_file: str):
         "vacuum_level": vacuum_level,
         "homo": homo_rel,
         "lumo": lumo_rel,
-        "bandgap": lumo - homo
+        "bandgap": lumo - homo,
     }
 
 
-def soc_band_gap(atom_path: Path | Atoms, functional: str = "PBE",
-                 kpts: int = 18, pw_cut: float = 500):
-
-    calc = GPAW(mode=PW(pw_cut),
-                xc=functional,
-                setups={'W': '6'},
-                occupations=FermiDirac(width=0.01),
-                kpts=(kpts, kpts, 1),
-                txt=None)
-
+def calc_soc_gap(
+    atom_path: Path | Atoms,
+    functional: str = "PBE",
+    kpts: int = 18,
+    pw_cut: float = 500,
+) -> tuple[float, float, float]:
     if isinstance(atom_path, Path):
         atoms = read(atom_path)
     elif isinstance(atom_path, Atoms):
@@ -80,9 +83,29 @@ def soc_band_gap(atom_path: Path | Atoms, functional: str = "PBE",
     else:
         raise TypeError("atom_path must be a Path or Atoms object")
 
+    calc = GPAW(
+        mode=PW(pw_cut),  # Basis set
+        xc=functional,  # Functional
+        kpts={"size": (kpts, kpts, 1)},  # k-points
+        occupations=FermiDirac(0.01),
+        txt=None,
+    )
+
     atoms.calc = calc
     atoms.get_potential_energy()
 
-    ef = atoms.calc.get_fermi_level()
+    soc = soc_eigenstates(calc)
+    eigs = soc.eigenvalues(broadcast=True)  # eV, shape (nbands_soc, nkpoints)
+    occ = soc.occupation_numbers(broadcast=True)
 
-    atoms.calc.fixed_density()
+    energies = eigs.ravel()  # flatten eigenvalues into 1D array
+    occs = occ.ravel()  # flatten occupation numbers
+
+    occ_thresh = 0.5
+    occupied_energies = energies[occs > occ_thresh]
+    unoccupied_energies = energies[occs <= occ_thresh]
+
+    homo_soc = occupied_energies.max()
+    lumo_soc = unoccupied_energies.min()
+
+    return lumo_soc - homo_soc, lumo_soc, homo_soc
