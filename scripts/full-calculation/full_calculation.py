@@ -13,7 +13,7 @@ from functions.util import repeate_cells
 from scipy.interpolate import LinearNDInterpolator
 
 # Get structure
-path = '../../structures/MoS2-WSe2-MatterSim/1.05_3027/structure_ml.json'
+path = '../../structures/MoS2-WSe2-MatterSim/1.11_2946/structure_ml.json'
 atoms = read(path)
 
 # Read strain data
@@ -71,7 +71,7 @@ for i in range(len(x_WSe2)):
     # run the optimization until forces are smaller than fmax
     opt.run(fmax=0.01)
 
-    gap, lumo, homo = calc_gap(bilayer, kpts=30)
+    gap, lumo, homo = calc_gap(bilayer, kpts=30, soc=True)
     raw_gap.append(gap)
     lumo_levels.append(lumo)
     homo_levels.append(homo)

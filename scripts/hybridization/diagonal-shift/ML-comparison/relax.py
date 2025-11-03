@@ -5,9 +5,11 @@ from ase.optimize import BFGS
 from ase.filters import FrechetCellFilter
 from ase.parallel import parprint
 from ase.calculators.dftd3 import DFTD3
-from gpaw import GPAW, PW, FermiDirac
+from gpaw import PW, FermiDirac
+from gpaw.new.ase_interface import GPAW
 import numpy as np
 import csv
+
 
 def create_bilayer(z_dist: float, lattice_length: float = 3.2515,
                    a_shift: float = 0, b_shift: float = 0,
@@ -49,7 +51,9 @@ def create_bilayer(z_dist: float, lattice_length: float = 3.2515,
 
 
 def calc_gap(atoms, functional: str = "PBE",
-             kpts: int = 18, pw_cut: float = 500) -> tuple[float, float, float]:
+             kpts: int = 18, pw_cut: float = 500) -> tuple[float,
+                                                           float,
+                                                           float]:
 
     calc = GPAW(mode=PW(pw_cut),  # Basis set
                 xc=functional,  # Functional
@@ -63,6 +67,7 @@ def calc_gap(atoms, functional: str = "PBE",
     homo, lumo = calc.get_homo_lumo()
 
     return lumo - homo
+
 
 a = 3.2515  # Average lattice length
 
@@ -79,8 +84,6 @@ for shift in shift_arr:
                             b_shift=shift,
                             constrain=True,
                             acute_corner=True)
-
-
     struct.pbc = [1, 1, 1]
 
     calc = GPAW(mode=PW(500),  # Basis set
@@ -91,17 +94,19 @@ for shift in shift_arr:
     struct.calc = DFTD3(dft=calc)
 
     opt_filter = FrechetCellFilter(struct, mask=[1, 1, 0, 0, 0, 1])
-    opt = BFGS(opt_filter, logfile=f'logs/relax_{shift:.2f}.log', trajectory=f'traj_files/relax_{shift:.2f}.traj')
-    opt.run(fmax=0.01)
+    opt = BFGS(opt_filter,
+               logfile=f'logs/relax_{shift:.2f}.log',
+               trajectory=f'traj_files/relax_{shift:.2f}.traj')
+    opt.run(fmax=0.002, steps=200)
 
     parprint('Starting gap calc')
     gap = calc_gap(struct, kpts=30)
     parprint('The gap is:')
     parprint(gap)
-    
+
     symbols = np.array(struct.get_chemical_symbols())
     relaxed_z_dist = abs(struct[symbols == 'W'].positions[0][2]
-                          - struct[symbols == 'Mo'].positions[0][2])
+                         - struct[symbols == 'Mo'].positions[0][2])
     z_arr.append(relaxed_z_dist)
     vec1_arr.append(np.linalg.norm(struct.cell[0, :2]))
     vec2_arr.append(np.linalg.norm(struct.cell[1, :2]))
@@ -117,13 +122,10 @@ for shift in shift_arr:
 # Write to CSV
 with open("DFT_data.csv", mode="w", newline="") as f:
     writer = csv.writer(f)
-    
+
     # Optional: write header
     writer.writerow(["shift", "z", "vec1", "vec2", "gap"])
-    
+
     # Write data rows
     for s, z, v1, v2, g in zip(shift_arr, z_arr, vec1_arr, vec2_arr, gap_arr):
         writer.writerow([s, z, v1, v2, g])
-
-
-

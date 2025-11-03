@@ -1,33 +1,36 @@
 import numpy as np
 from functions.structure import create_bilayer
-from gpaw import GPAW, PW
+from functions.bandstructure import calc_gap
+from gpaw import PW
+from gpaw.new.ase_interface import GPAW
 from ase.calculators.dftd3 import DFTD3
 from ase.filters import UnitCellFilter
 from ase.optimize.bfgs import BFGS
 import csv
 
 average_lattice = 3.2515
-average_cell = np.array([[1, 0], [-0.5, np.sqrt(3) / 2]]) * average_lattice
+average_cell = np.array([[1, 0], [0.5, np.sqrt(3) / 2]]) * average_lattice
 
-# Make sure the CSV file has a header
 with open("results.csv", mode="w", newline="") as f:
     writer = csv.writer(f)
-    writer.writerow(["i", "j", "v1_norm", "v2_norm", "z_dist"])
+    writer.writerow(["i", "j", "v1_norm", "v2_norm", "z_dist", "gap"])
 
 
-for i in np.linspace(0, 1, 15):
-    for j in np.linspace(0, 1, 15):
+for i in np.linspace(0, 1, 30):
+    for j in np.linspace(0, 1, 30):
         bilayer = create_bilayer(z_dist=6.6,  constrain=True,
                                  a_shift=i, b_shift=j)
 
         bilayer.calc = DFTD3(dft=GPAW(mode=PW(500),
-                                      kpts=(6, 6, 1),
+                                      kpts=(8, 8, 1),
                                       xc='PBE',
                                       txt='bilayer.txt'))
 
         uf = UnitCellFilter(bilayer, mask=[1, 1, 0, 0, 0, 1])
         relax = BFGS(uf, trajectory=f'traj_files/opt_{i:.2f}_{j:.2f}.traj')
-        relax.run(fmax=0.02)
+        relax.run(fmax=0.01)
+
+        gap = calc_gap(bilayer, kpts=30, soc=True)
 
         v1_norm = np.linalg.norm(bilayer.cell[0])
         v2_norm = np.linalg.norm(bilayer.cell[1])
@@ -38,8 +41,7 @@ for i in np.linspace(0, 1, 15):
 
         z_dist = np.abs(W_z - Mo_z)[0]
 
-        # TODO: Add mpi rank=0 check
         # Append results to CSV
         with open("results.csv", mode="a", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow([i, j, v1_norm, v2_norm, z_dist])
+            writer.writerow([i, j, v1_norm, v2_norm, z_dist, gap])

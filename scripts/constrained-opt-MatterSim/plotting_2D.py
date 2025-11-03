@@ -42,7 +42,7 @@ def scatter_plot(data, title, label, filename):
     scatter = ax.scatter(x_and_y[:, 0],
                          x_and_y[:, 1],
                          c=data,
-                         cmap='cool')
+                         cmap='viridis')
     fig.colorbar(scatter, ax=ax, label=label)
     ax.set_xlabel("X Position [Å]")
     ax.set_ylabel("Y Position [Å]")
