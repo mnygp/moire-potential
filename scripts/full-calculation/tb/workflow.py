@@ -1,0 +1,80 @@
+import taskblaster as tb
+
+path = '/structures/MoS2-WSe2-MatterSim/1.11_2946/structure_ml.json'
+
+@tb.workflow
+class Workflow:
+    struct_path = tb.var()
+
+    @tb.task
+    def get_atoms_path(self):
+        return tb.node('get_root_path', directory='moire-potential',
+                       path_str=self.struct_path)
+
+    @tb.task
+    def geometric_parameters(self):
+        return tb.node('get_geometry', atom_path=self.get_atoms_path)
+
+    # Fixed cell size and fix TM position
+    @tb.dynamical_workflow_generator({'results': '*/*',
+                                      'gap_results': '*/return_dict'})
+    def fixed_cell_fixed_TM(self):
+        return tb.node('generate_wfs_task',
+                       input=self.geometric_parameters,
+                       fixed_cell=True,
+                       fixed_atom=True)
+
+    @tb.task
+    def write_csv_fixed_cell_fixed_TM(self):
+        return tb.node('write_results_to_csv',
+                       results_dict=self.fixed_cell_fixed_TM.gap_results,
+                       csv_name='results_fixed_cell_fixed_TM.csv')
+
+    # Fixed cell size and variable TM position
+    @tb.dynamical_workflow_generator({'results': '*/*',
+                                      'gap_results': '*/return_dict'})
+    def fixed_cell_variable_TM(self):
+        return tb.node('generate_wfs_task',
+                       input=self.geometric_parameters,
+                       fixed_cell=True,
+                       fixed_atom=False)
+
+    @tb.task
+    def write_csv_fixed_cell_variable_TM(self):
+        return tb.node('write_results_to_csv',
+                       results_dict=self.fixed_cell_variable_TM.gap_results,
+                       csv_name='results_fixed_cell_variable_TM.csv')
+
+    # Variable cell size and variable TM position
+    @tb.dynamical_workflow_generator({'results': '*/*',
+                                      'gap_results': '*/return_dict'})
+    def variable_cell_variable_TM(self):
+        return tb.node('generate_wfs_task',
+                       input=self.geometric_parameters,
+                       fixed_cell=False,
+                       fixed_atom=False)
+
+    @tb.task
+    def write_csv_variable_cell_variable_TM(self):
+        return tb.node('write_results_to_csv',
+                       results_dict=self.variable_cell_variable_TM.gap_results,
+                       csv_name='results_variable_cell_variable_TM.csv')
+
+    # Fixed cell size and variable TM position
+    @tb.dynamical_workflow_generator({'results': '*/*',
+                                      'gap_results': '*/return_dict'})
+    def variable_cell_fixed_TM(self):
+        return tb.node('generate_wfs_task',
+                       input=self.geometric_parameters,
+                       fixed_cell=False,
+                       fixed_atom=True)
+
+    @tb.task
+    def write_csv_variable_cell_fixed_TM(self):
+        return tb.node('write_results_to_csv',
+                       results_dict=self.variable_cell_fixed_TM.gap_results,
+                       csv_name='results_variable_cell_fixed_TM.csv')
+
+
+def workflow(runner):
+    runner.run_workflow(Workflow(struct_path=path))  # type:ignore
