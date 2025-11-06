@@ -1,6 +1,7 @@
 import numpy as np
 from ase import Atoms
 from pathlib import Path
+from ase.io import read
 
 
 def closest_index(
@@ -46,7 +47,7 @@ def repeate_cells(
     return x, y, data
 
 
-def check_formula(chemicals: np.ndarray):
+def check_formula(chemicals: np.ndarray) -> bool:
     chem = ["W", "Se", "Mo", "S"]
     number = [1, 2, 1, 2]
     chemicals = np.array(chemicals)
@@ -55,6 +56,21 @@ def check_formula(chemicals: np.ndarray):
             return False
 
     return True
+
+
+def get_z_dist(atom_path: Path | Atoms) -> float:
+    if isinstance(atom_path, Atoms):
+        atoms = atom_path
+    else:
+        atoms = read(atom_path)
+
+    valid_struct = check_formula(atoms.get_chemical_symbols())
+    assert valid_struct, "Incorrect formula in atoms object"
+
+    symb = np.array(atoms.get_chemical_symbols())
+    z_dist = (atoms[symb == 'W'].positions[0][2]
+              - atoms[symb == 'Mo'].positions[0][2])
+    return abs(z_dist)
 
 
 def add_distance(atoms: Atoms, distance: float) -> Atoms:

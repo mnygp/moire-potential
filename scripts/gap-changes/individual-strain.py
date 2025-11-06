@@ -14,9 +14,9 @@ WSe2_lattice = 3.319
 # How much to strain either layer to reach equilibrium lattice constant
 equilibrium_strain = (WSe2_lattice - average_lattice) / average_lattice
 
-nkpts = 40
+nkpts = 50
 
-strain = np.linspace(1-equilibrium_strain, 1+equilibrium_strain, endpoint=True)
+strain = np.linspace(1-0.035, 1+0.035, endpoint=True)
 parprint(f'Calculating strain from {(1-equilibrium_strain)*100:.2f}%'
          f' to {(1+equilibrium_strain)*100:.2f}%')
 MoS2_homo = []
@@ -66,7 +66,7 @@ for i in strain:
     parprint('---------------------------------------------')
 
 
-with open('band_edges_medium_soc.csv', mode='w', newline='') as f:
+with open('band_edges_large_soc.csv', mode='w', newline='') as f:
     writer = csv.writer(f)
     # Header row
     writer.writerow(['strain', 'MoS2_homo', 'MoS2_lumo',
