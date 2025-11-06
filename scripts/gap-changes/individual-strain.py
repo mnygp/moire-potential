@@ -2,7 +2,7 @@ from ase.build import mx2
 from ase.parallel import parprint
 from ase.calculators.dftd3 import DFTD3
 from ase.optimize import BFGS
-from gpaw import GPAW, PW, FermiDirac
+from gpaw import GPAW, PW, FermiDirac  # pyright: ignore
 from functions.bandstructure import get_vacuum_and_band_edges
 import numpy as np
 import csv
@@ -11,9 +11,14 @@ average_lattice = 3.2515
 MoS2_lattice = 3.184
 WSe2_lattice = 3.319
 
-nkpts = 26
+# How much to strain either layer to reach equilibrium lattice constant
+equilibrium_strain = (WSe2_lattice - average_lattice) / average_lattice
 
-strain = np.linspace(0.98, 1.02, 25, endpoint=True)
+nkpts = 40
+
+strain = np.linspace(1-equilibrium_strain, 1+equilibrium_strain, endpoint=True)
+parprint(f'Calculating strain from {(1-equilibrium_strain)*100:.2f}%'
+         f' to {(1+equilibrium_strain)*100:.2f}%')
 MoS2_homo = []
 MoS2_lumo = []
 WSe2_homo = []

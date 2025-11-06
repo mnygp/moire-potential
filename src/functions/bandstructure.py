@@ -28,6 +28,10 @@ def calc_gap(
         occupations=FermiDirac(0.01),
         txt=None,
     )
+
+    atoms.calc = calc
+    atoms.get_potential_energy()
+
     if soc:
         soc_eig = soc_eigenstates(calc)
         eigs = soc_eig.eigenvalues(broadcast=True)
@@ -43,9 +47,6 @@ def calc_gap(
         homo = occupied_energies.max()
         lumo = unoccupied_energies.min()
     else:
-        atoms.calc = calc
-        atoms.get_potential_energy()
-
         homo, lumo = calc.get_homo_lumo()
 
     return lumo - homo, lumo, homo
