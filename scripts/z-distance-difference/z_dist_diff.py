@@ -10,7 +10,7 @@ WSe2_lattice = 3.319
 average_cell = np.array([[1, 0], [0.5, np.sqrt(3) / 2]]) * average_lattice
 
 # Small cell data for interpolation
-small_data = np.genfromtxt('../mapping/results_old.csv',
+small_data = np.genfromtxt('../mapping/results_high_res.csv',
                            skip_header=1,
                            delimiter=',')
 
@@ -21,7 +21,8 @@ z_dist = small_data[:, 4]
 x_and_y = np.stack((i, j), axis=-1)
 transform_coords = x_and_y @ average_cell
 
-small_interpolator = CloughTocher2DInterpolator(transform_coords, z_dist)
+# small_interpolator = CloughTocher2DInterpolator(transform_coords, z_dist)
+small_interpolator = LinearNDInterpolator(transform_coords, z_dist)
 
 
 def diag(num_points, v1, v2):
@@ -48,7 +49,7 @@ inter_x, inter_y, inter_distance = geometry.interlayer_distance(atoms)
 
 x = np.linspace(0, 1, resolution)
 large_diag_points = np.outer(x, large_v1 - large_v2) + large_v2
-"""
+
 large_interpolator = LinearNDInterpolator(
     np.stack((inter_x, inter_y), axis=-1), inter_distance
 )
@@ -56,15 +57,17 @@ large_interpolator = LinearNDInterpolator(
 large_interpolator = CloughTocher2DInterpolator(
     np.stack((inter_x, inter_y), axis=-1), inter_distance
 )
-
+"""
 large_interp_data = large_interpolator(large_diag_points)
 
 print(large_interp_data.shape)
 
 
-plt.plot(np.linspace(0, 1, resolution), small_interp_data, label='DFT small cells')
-plt.plot(np.linspace(0, 1, resolution), large_interp_data, label='MatterSim structure')
-plt.xlabel('Norm of lattice shift along diagonal direction [Å]')
+plt.plot(np.linspace(0, 1, resolution),
+         small_interp_data, label='DFT small cells')
+plt.plot(np.linspace(0, 1, resolution),
+         large_interp_data, label='MatterSim structure')
+plt.xlabel('Shift along diagonal [Normalized]')
 plt.ylabel('Interlayer Distance [Å]')
 plt.title('Interlayer Distance vs Lattice Shift along diagonal')
 plt.legend()

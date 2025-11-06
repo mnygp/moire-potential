@@ -107,7 +107,8 @@ plt.close(fig)  # optional: closes figure if running in loops
 
 DFT_data = np.genfromtxt('DFT_data.csv', delimiter=',', skip_header=1)
 MACE_data = np.genfromtxt('MACE_data.csv', delimiter=',', skip_header=1)
-MAtterSim_data = np.genfromtxt('MatterSim_data.csv', delimiter=',', skip_header=1)
+MAtterSim_data = np.genfromtxt('MatterSim_data.csv', delimiter=',',
+                               skip_header=1)
 
 shift = DFT_data[:, 0]
 # z distance [:, 1]
@@ -115,28 +116,32 @@ shift = DFT_data[:, 0]
 # vec2 [:, 3]
 # gap [:, 4]
 
-fig1, ax1 = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(7, 9))
+fig1, ax1 = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(7, 6))
 
-
+"""
 for data, color, name in zip([DFT_data, MACE_data, MAtterSim_data],
                              ['C0', 'C1', 'C2'],
                              ['DFT', 'MACE', 'MatterSim']):
+"""
+for data, color, name in zip([DFT_data, MAtterSim_data],
+                             ['C0','C2'],
+                             ['DFT', 'MatterSim']):
     z_dist = data[:, 1]
     average_vec = (data[:, 2] + data[:, 3]) / 2
     gap = data[:, 4]
 
     ax1[0].plot(shift, z_dist, '-o', color=color)
-    ax1[1].plot(shift, (average_vec - 3.184)/3.184 * 100, '-o', color=color)
-    ax1[2].plot(shift, gap, '-o', color=color, label=name)
+    # ax1[1].plot(shift, (average_vec - 3.184)/3.184 * 100, '-o', color=color)
+    ax1[1].plot(shift, gap, '-o', color=color, label=name)
 
-ax1[2].set_xlabel('Shift [fraction of lattice vector]')
+ax1[1].set_xlabel('Shift [fraction of lattice vector]')
 ax1[0].set_ylabel('Interlayer distance [Å]')
-ax1[1].set_ylabel('Lattice deviation from MoS2 [%]')
-ax1[2].set_ylabel('Band gap [eV]')
-ax1[2].legend()
-ax1[0].set_title('Comparison of DFT, MACE and MatterSim')
+# ax1[1].set_ylabel('Lattice deviation from MoS2 [%]')
+ax1[1].set_ylabel('Band gap [eV]')
+ax1[1].legend()
+ax1[0].set_title('Comparison of DFT and MatterSim')
 ax1[0].grid(True)
 ax1[1].grid(True)
-ax1[2].grid(True)
+# ax1[2].grid(True)
 fig1.tight_layout()
 fig1.savefig('plots/DFT_MACE_MatterSim_comparison.png', dpi=500)

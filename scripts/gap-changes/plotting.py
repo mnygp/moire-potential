@@ -37,10 +37,11 @@ plt.close()
 
 # ############### Plot gap as a function of strain ############################
 im = plt.imshow(
-    band_gap_grid - ref_gap,
-    extent=(strain_data[0], strain_data[-1], strain_data[0], strain_data[-1]),
+    band_gap_grid,  # - ref_gap,
+    extent=(strain_data[0]*100, strain_data[-1]*100,
+            strain_data[0]*100, strain_data[-1]*100),
     origin="lower",
-    # interpolation='spline16'
+    interpolation='spline16'
 )
 plt.xlabel("MoS2 strain [%]")
 plt.ylabel("WSe2 strain [%]")
@@ -123,8 +124,8 @@ interpolated_gap = correction_interp(X, Y)
 
 mesh = plt.pcolormesh(X, Y, (interpolated_gap - min(corrections))*1000,
                       shading="auto")
-plt.colorbar(mesh, label="Gap [meV]", cmap="viridis")
-plt.title("Strain corrected local band gap")
+plt.colorbar(mesh, label="Change in band gap [meV]", cmap="viridis")
+plt.title("Strain correction")
 plt.xlabel("x")
 plt.ylabel("y")
 plt.axis("equal")

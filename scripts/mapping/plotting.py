@@ -9,7 +9,7 @@ WSe2_lattice = 3.319
 average_cell = np.array([[1, 0], [0.5, np.sqrt(3) / 2]]) * average_lattice
 
 
-data = np.genfromtxt('results.csv', skip_header=1, delimiter=',')
+data = np.genfromtxt('results_high_res.csv', skip_header=1, delimiter=',')
 
 i = data[:, 0]
 j = data[:, 1]
@@ -79,7 +79,7 @@ grid_points = np.stack([grid_x.ravel(), grid_y.ravel()], axis=-1)
 grid_vals = interpolator(grid_points).reshape(grid_x.shape)
 
 # plot
-plt.figure(figsize=(6, 5))
+plt.figure()  # figsize=(6, 5))
 im = plt.imshow(
     grid_vals,
     extent=(x_min, x_max, y_min, y_max),
@@ -90,5 +90,5 @@ plt.colorbar(im, label="Interlayer Distance [Å]")
 plt.xlabel("X [Å]")
 plt.ylabel("Y [Å]")
 plt.title("Interlayer Distance Map")
-# plt.savefig("interlayer_distance_map.png", dpi=500)
-plt.show()
+plt.tight_layout()
+plt.savefig("interlayer_distance_map.png", dpi=500)
