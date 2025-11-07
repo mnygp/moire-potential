@@ -69,30 +69,18 @@ class single_cell:
     structure_path = tb.var()
 
     @tb.task
-    def create_struct(self):
-        return tb.node('create_structure',
-                       z_dist=self.ml_z_dist,
-                       a_shift=self.i,
-                       b_shift=self.j)
-
-    @tb.task
     def relax(self):
         return tb.node('relaxation',
-                       atom_path=self.create_struct,
+                       z_dist=self.ml_z_dist,
+                       a_shift=self.i,
+                       b_shift=self.j,
                        x=self.x, y=self.y,
                        fixed_cell=self.fixed_cell,
                        fixed_atom=self.fixed_atom)
 
     @tb.task
-    def get_dft_z(self):
-        return tb.node('get_z_dist', atom_path=self.relax)
-
-    @tb.task
-    def calculate_gap(self):
-        return tb.node('calc_gap',
-                       atom_path=self.relax,
-                       kpts=30,
-                       soc=True)
+    def calculate_gap_and_z(self):
+        return tb.node('gap_and_z_dist', atom_path=self.relax)
 
     @tb.task
     def correction(self):
@@ -112,12 +100,10 @@ class single_cell:
                        x=self.x,
                        y=self.y,
                        z_ml=self.ml_z_dist,
-                       z_dft=self.get_dft_z,
+                       gap_and_z=self.calculate_gap_and_z,
                        i=self.i,
                        j=self.j,
-                       gap=self.calculate_gap,
                        correction=self.correction,
-                       Mo_strain=self.Mo_strain_arr,
                        W_strain=self.W_strain)
 
 
@@ -132,10 +118,16 @@ def create_structure(z_dist: float,
     return Path('bilayer.json')
 
 
-def relaxation(atom_path: str, x: int, y: int,
+def relaxation(x: int, y: int,
+               z_dist: float,
+               a_shift: float,
+               b_shift: float,
                fixed_cell: bool, fixed_atom: bool) -> Path:
 
-    atoms = read(atom_path)
+    atoms = create_bilayer(z_dist,
+                           lattice_length=3.2515,
+                           a_shift=a_shift,
+                           b_shift=b_shift)
     file_name = f'opt_{x:.3f}_{y:.3f}'
 
     indices = [atom.index for atom in atoms if (atom.symbol == "W"
@@ -164,6 +156,12 @@ def relaxation(atom_path: str, x: int, y: int,
     write(relaxed_name, atoms)
 
     return Path(relaxed_name)
+
+
+def gap_and_z_dist(atom_path) -> list[float]:
+    gap = calc_gap(atom_path, kpts=30, soc=True)
+    z_dist = get_z_dist(atom_path)
+    return [gap[0], z_dist]
 
 
 def get_root_path(directory: str, path_str: str) -> str:
@@ -219,7 +217,6 @@ def strain_correction(atom_path: Path,
     WSe2_ref = (lattice_length - 3.319)/3.319 + 1
 
     ref_strains = [MoS2_ref, WSe2_ref]
-    print((ref_strains[0] - 1)*100, (ref_strains[1] - 1)*100)
 
     err_str = ("Excessive strain or wrong unit."
                + " Strain must be in decimal and within +/- 3.5%.")
@@ -265,22 +262,20 @@ def return_as_dict(
     x: float,
     y: float,
     z_ml: float,
-    z_dft: float,
+    gap_and_z: list[float],
     i: int,
     j: int,
-    gap: list[float],
     correction: list[float],
-    Mo_strain: float,
     W_strain: float
 ) -> dict:
     return {
         "x": x,
         "y": y,
         "z_ml": z_ml,
-        "z_dft": z_dft,
+        "z_dft": gap_and_z[1],
         "i": i,
         "j": j,
-        "gap": gap[0],
+        "gap": gap_and_z[0],
         "correction": correction[0],
         "Mo_strain": correction[1],
         "W_strain": W_strain,
