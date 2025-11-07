@@ -17,62 +17,66 @@ class Workflow:
 
     # Fixed cell size and fix TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
-                                      'gap_results': '*/return_dict'})
+                                      'results_dict': '*/return_dict'})
     def fixed_cell_fixed_TM(self):
         return tb.node('generate_wfs_task',
                        input=self.geometric_parameters,
                        fixed_cell=True,
-                       fixed_atom=True)
+                       fixed_atom=True,
+                       structure_path=self.get_atoms_path)
 
     @tb.task
     def write_csv_fixed_cell_fixed_TM(self):
         return tb.node('write_results_to_csv',
-                       results_dict=self.fixed_cell_fixed_TM.gap_results,
+                       results_dict=self.fixed_cell_fixed_TM.results_dict,
                        csv_name='results_fixed_cell_fixed_TM.csv')
 
     # Fixed cell size and variable TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
-                                      'gap_results': '*/return_dict'})
+                                      'results_dict': '*/return_dict'})
     def fixed_cell_variable_TM(self):
         return tb.node('generate_wfs_task',
                        input=self.geometric_parameters,
                        fixed_cell=True,
-                       fixed_atom=False)
+                       fixed_atom=False,
+                       structure_path=self.get_atoms_path)
 
     @tb.task
     def write_csv_fixed_cell_variable_TM(self):
         return tb.node('write_results_to_csv',
-                       results_dict=self.fixed_cell_variable_TM.gap_results,
+                       results_dict=self.fixed_cell_variable_TM.results_dict,
                        csv_name='results_fixed_cell_variable_TM.csv')
 
     # Variable cell size and variable TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
-                                      'gap_results': '*/return_dict'})
+                                      'results_dict': '*/return_dict'})
     def variable_cell_variable_TM(self):
         return tb.node('generate_wfs_task',
                        input=self.geometric_parameters,
                        fixed_cell=False,
-                       fixed_atom=False)
+                       fixed_atom=False,
+                       structure_path=self.get_atoms_path)
 
     @tb.task
     def write_csv_variable_cell_variable_TM(self):
         return tb.node('write_results_to_csv',
-                       results_dict=self.variable_cell_variable_TM.gap_results,
+                       results_dict=self.variable_cell_variable_TM.results_dict,
                        csv_name='results_variable_cell_variable_TM.csv')
 
     # Fixed cell size and variable TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
-                                      'gap_results': '*/return_dict'})
+                                      'results_dict': '*/return_dict'})
     def variable_cell_fixed_TM(self):
         return tb.node('generate_wfs_task',
                        input=self.geometric_parameters,
                        fixed_cell=False,
-                       fixed_atom=True)
+                       fixed_atom=True,
+                       structure_path=self.get_atoms_path)
 
     @tb.task
     def write_csv_variable_cell_fixed_TM(self):
         return tb.node('write_results_to_csv',
-                       results_dict=self.variable_cell_fixed_TM.gap_results,
+                       results_dict=self.variable_cell_fixed_TM.results_dict,
                        csv_name='results_variable_cell_fixed_TM.csv')
 
 
