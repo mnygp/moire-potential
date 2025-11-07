@@ -20,27 +20,36 @@ from gpaw.new.ase_interface import GPAW
 from functions.structure import create_bilayer
 from functions.bandstructure import calc_gap
 from functions.geometry import interlayer_distance, get_shifts, strain
-from functions.util import get_z_dist
+from functions.util import get_z_dist, repeate_cells
 
 
 @tb.dynamical_workflow_generator_task
-def generate_wfs_task(input: dict, fixed_atom: bool, fixed_cell: bool):
-    for x, y, mo_str, w_str, z, i, j in zip(
-        input['x'],
-        input['y'],
-        input['MoS2_strain'],
+def generate_wfs_task(input: dict, fixed_atom: bool, fixed_cell: bool,
+                      structure_path: Path):
+    for x, y, w_str, z, i, j in zip(
+        input['x_W'],
+        input['y_W'],
         input['WSe2_strain'],
         input['interlayer_dist'],
         input['i_shifts'],
         input['j_shifts']
     ):
-        wf = single_cell(x=x, y=y, i=i, j=j,
-                         Mo_strain=mo_str,
+        Mo_strain_arr = input['MoS2_strain']
+        x_Mo_arr = input['x_Mo']
+        y_Mo_arr = input['y_Mo']
+        wf = single_cell(x=x,
+                         y=y,
+                         i=i,
+                         j=j,
                          W_strain=w_str,
                          ml_z_dist=z,
+                         x_Mo_arr=x_Mo_arr,
+                         y_Mo_arr=y_Mo_arr,
+                         Mo_strain_arr=Mo_strain_arr,
                          fixed_cell=fixed_cell,
-                         fixed_atom=fixed_atom)
-        name = f"gap_{i:.2f}_{j:.2f}"
+                         fixed_atom=fixed_atom,
+                         structure_path=structure_path)
+        name = f"{x:.3f}_{x:.3f}"
         yield name, wf
 
 
@@ -51,10 +60,13 @@ class single_cell:
     i = tb.var()
     j = tb.var()
     W_strain = tb.var()
-    Mo_strain = tb.var()
     ml_z_dist = tb.var()
+    x_Mo_arr = tb.var()
+    y_Mo_arr = tb.var()
+    Mo_strain_arr = tb.var()
     fixed_cell = tb.var()
     fixed_atom = tb.var()
+    structure_path = tb.var()
 
     @tb.task
     def create_struct(self):
@@ -86,8 +98,13 @@ class single_cell:
     def correction(self):
         return tb.node('strain_correction',
                        atom_path=self.relax,
-                       MoS2_strain=self.Mo_strain,
-                       WSe2_strain=self.W_strain)
+                       x=self.x,
+                       y=self.y,
+                       WSe2_strain=self.W_strain,
+                       x_Mo=self.x_Mo_arr,
+                       y_Mo=self.y_Mo_arr,
+                       Mo_strain_arr=self.Mo_strain_arr,
+                       structure_path=self.structure_path)
 
     @tb.task
     def return_dict(self):
@@ -100,7 +117,7 @@ class single_cell:
                        j=self.j,
                        gap=self.calculate_gap,
                        correction=self.correction,
-                       Mo_strain=self.Mo_strain,
+                       Mo_strain=self.Mo_strain_arr,
                        W_strain=self.W_strain)
 
 
@@ -150,7 +167,6 @@ def relaxation(atom_path: str, x: int, y: int,
 
 
 def get_root_path(directory: str, path_str: str) -> str:
-    """Find the moire-potential root directory and return full structure path."""
     current_path = Path(__file__).resolve()
     print(f"Current path: {current_path}")
 
@@ -166,9 +182,8 @@ def get_root_path(directory: str, path_str: str) -> str:
 
 
 def get_geometry(atom_path):
-
     atoms = read(atom_path)
-    _, _, MoS2_strain = strain(atoms, 'Mo')
+    x_MoS2, y_MoS2, MoS2_strain = strain(atoms, 'Mo')
     x_WSe2, y_WSe2, WSe2_strain = strain(atoms, 'W')
     _, _, interlayer_dist = interlayer_distance(atoms)
 
@@ -177,8 +192,10 @@ def get_geometry(atom_path):
     y_shifts = shift_dict['shifts'][:, 1]
 
     return {
-        'x': x_WSe2,
-        'y': y_WSe2,
+        'x_W': x_WSe2,
+        'y_W': y_WSe2,
+        'x_Mo': x_MoS2,
+        'y_Mo': y_MoS2,
         'MoS2_strain': MoS2_strain,
         'WSe2_strain': WSe2_strain,
         'interlayer_dist': interlayer_dist,
@@ -188,27 +205,39 @@ def get_geometry(atom_path):
 
 
 def strain_correction(atom_path: Path,
-                      MoS2_strain: float,
-                      WSe2_strain: float) -> float:
+                      structure_path: Path,
+                      WSe2_strain: float,
+                      x: float,
+                      y: float,
+                      x_Mo: list[float],
+                      y_Mo: list[float],
+                      Mo_strain_arr: list[float]) -> list[float]:
 
     atoms = read(atom_path)
     lattice_length = np.mean(np.linalg.norm(atoms.cell[:2, :2], axis=1))
-
-    MoS2_ref = (3.184 - lattice_length)/3.184 + 1
-    WSe2_ref = (3.319 - lattice_length)/3.319 + 1
+    MoS2_ref = (lattice_length - 3.184)/3.184 + 1
+    WSe2_ref = (lattice_length - 3.319)/3.319 + 1
 
     ref_strains = [MoS2_ref, WSe2_ref]
-    print("Ref_strains:")
-    print(ref_strains[0]*100, ref_strains[1]*100)
-    ref_strains = [1.01, 0.99]
+    print((ref_strains[0] - 1)*100, (ref_strains[1] - 1)*100)
 
     err_str = ("Excessive strain or wrong unit."
                + " Strain must be in decimal and within +/- 3.5%.")
     assert 0.965 < ref_strains[0] < 1.035, err_str
     assert 0.965 < ref_strains[1] < 1.035, err_str
 
+    struct = read(structure_path)
+    # Create the Mo strain interpolator and get the value
+    x_Mo_L, y_Mo_L, Mo_strain_L = repeate_cells(x_Mo, y_Mo, Mo_strain_arr,
+                                                range(-1, 2), struct.cell[0],
+                                                struct.cell[1])
+
+    MoS2_strain_intp = LinearNDInterpolator(np.column_stack((x_Mo_L, y_Mo_L)),
+                                            Mo_strain_L)
+    MoS2_strain = MoS2_strain_intp([x, y])[0]
+
     # The medium data set goes from -2% to 2% along both axis
-    csv_file = find_file(filename="band_edges_medium_soc.csv",
+    csv_file = find_file(filename="band_edges_large_soc.csv",
                          root_dir_name="full-calculation")
     data = np.genfromtxt(csv_file,
                          skip_header=1, dtype=float, delimiter=",")
@@ -221,23 +250,15 @@ def strain_correction(atom_path: Path,
     lumo_grid, homo_grid = np.meshgrid(MoS2_lumo, WSe2_homo)
     band_gap_grid = lumo_grid - homo_grid
     MoS2_grid, WSe2_grid = np.meshgrid(strain_data, strain_data)
-    points = np.column_stack([MoS2_grid.ravel(), WSe2_grid.ravel()])  # shape (N,2)
-    print(points[:5,:])
+    points = np.column_stack([MoS2_grid.ravel(), WSe2_grid.ravel()])
     values = band_gap_grid.ravel()  # shape (N,)
     correction_interp = LinearNDInterpolator(points, values)
 
     ref_val = correction_interp(ref_strains)
 
-    print("Strains:")
-    print(MoS2_strain, WSe2_strain)
-
     correction_val = correction_interp([MoS2_strain + 1, WSe2_strain + 1])
 
-    print("Energies:")
-    print(correction_val)
-    print(ref_val)
-
-    return (correction_val - ref_val)[0]
+    return [(correction_val - ref_val)[0], MoS2_strain]
 
 
 def return_as_dict(
@@ -247,8 +268,8 @@ def return_as_dict(
     z_dft: float,
     i: int,
     j: int,
-    gap: float,
-    correction: float,
+    gap: list[float],
+    correction: list[float],
     Mo_strain: float,
     W_strain: float
 ) -> dict:
@@ -259,9 +280,9 @@ def return_as_dict(
         "z_dft": z_dft,
         "i": i,
         "j": j,
-        "gap": gap,
-        "correction": correction,
-        "Mo_strain": Mo_strain,
+        "gap": gap[0],
+        "correction": correction[0],
+        "Mo_strain": correction[1],
         "W_strain": W_strain,
     }
 
