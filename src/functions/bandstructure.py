@@ -34,8 +34,8 @@ def calc_gap(
 
     if soc:
         soc_eig = soc_eigenstates(calc)
-        eigs = soc_eig.eigenvalues(broadcast=True)
-        occ = soc_eig.occupation_numbers(broadcast=True)
+        eigs = soc_eig.eigenvalues()
+        occ = soc_eig.occupation_numbers()
 
         energies = eigs.ravel()
         occs = occ.ravel()
@@ -61,8 +61,8 @@ def get_vacuum_and_band_edges(gpw_file: str, soc=False):
 
     if soc:
         soc = soc_eigenstates(calc)
-        eigs = soc.eigenvalues(broadcast=True)
-        occ = soc.occupation_numbers(broadcast=True)
+        eigs = soc.eigenvalues()
+        occ = soc.occupation_numbers()
 
         energies = eigs.ravel()  # flatten eigenvalues into 1D array
         occs = occ.ravel()  # flatten occupation numbers
