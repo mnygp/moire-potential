@@ -49,7 +49,7 @@ def generate_wfs_task(input: dict, fixed_atom: bool, fixed_cell: bool,
                          fixed_cell=fixed_cell,
                          fixed_atom=fixed_atom,
                          structure_path=structure_path)
-        name = f"{x:.3f}_{x:.3f}"
+        name = f"{x:.3f}_{y:.3f}"
         yield name, wf
 
 
@@ -159,7 +159,7 @@ def relaxation(x: int, y: int,
 
 
 def gap_and_z_dist(atom_path) -> list[float]:
-    gap = calc_gap(atom_path, kpts=30, soc=True)
+    gap = calc_gap(atom_path, kpts=30, soc=True, functional='HSE06')
     z_dist = get_z_dist(atom_path)
     return [gap[0], z_dist]
 
@@ -316,6 +316,22 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
     # Write the CSV
     with open(csv_name, mode="w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+    return Path(csv_name)
+
+def write_Mo_pos_to_csv(results_dict: dict, csv_name: str) -> Path:
+
+    rows = []
+    for name, d in results_dict.items():
+        rows.append({
+            "x_Mo": d["x_Mo"],
+            "y_Mo": d["y_Mo"]})
+
+    # Write the CSV
+    with open(csv_name, mode="w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["x_Mo", "y_Mo"])
         writer.writeheader()
         writer.writerows(rows)
 

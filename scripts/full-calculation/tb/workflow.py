@@ -14,6 +14,13 @@ class Workflow:
     @tb.task
     def geometric_parameters(self):
         return tb.node('get_geometry', atom_path=self.get_atoms_path)
+    
+
+    @tb.task
+    def write_csv_Mo_pos(self):
+        return tb.node('write_Mo_pos_to_csv', results_dict=self.geometric_parameters,
+                       csv_name='Mo_positions.csv')
+
 
     # Fixed cell size and fix TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
