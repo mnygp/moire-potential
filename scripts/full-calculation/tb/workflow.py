@@ -14,7 +14,7 @@ class Workflow:
     @tb.task
     def geometric_parameters(self):
         return tb.node('get_geometry', atom_path=self.get_atoms_path)
-    
+
 
     @tb.task
     def write_csv_Mo_pos(self):
@@ -38,6 +38,12 @@ class Workflow:
                        results_dict=self.fixed_cell_fixed_TM.results_dict,
                        csv_name='results_fixed_cell_fixed_TM.csv')
 
+    tb.task
+    def write_kpt_csv_fixed_cell_fixed_TM(self):
+        return tb.node('write_kpts_to_csv',
+                       results_dict=self.fixed_cell_fixed_TM.results_dict,
+                       csv_name='ktps_fixed_cell_fixed_TM.csv')
+
     # Fixed cell size and variable TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
                                       'results_dict': '*/return_dict'})
@@ -53,6 +59,12 @@ class Workflow:
         return tb.node('write_results_to_csv',
                        results_dict=self.fixed_cell_variable_TM.results_dict,
                        csv_name='results_fixed_cell_variable_TM.csv')
+
+    tb.task
+    def write_kpt_csv_fixed_cell_variable_TM(self):
+        return tb.node('write_kpts_to_csv',
+                       results_dict=self.fixed_cell_variable_TM.results_dict,
+                       csv_name='ktps_fixed_cell_variable_TM.csv')
 
     # Variable cell size and variable TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
@@ -70,6 +82,12 @@ class Workflow:
                        results_dict=self.variable_cell_variable_TM.results_dict,
                        csv_name='results_variable_cell_variable_TM.csv')
 
+    tb.task
+    def write_kpt_csv_variable_cell_variable_TM(self):
+        return tb.node('write_kpts_to_csv',
+                       results_dict=self.variable_cell_variable_TM.results_dict,
+                       csv_name='ktps_variable_cell_variable_TM.csv')
+
     # Fixed cell size and variable TM position
     @tb.dynamical_workflow_generator({'results': '*/*',
                                       'results_dict': '*/return_dict'})
@@ -85,6 +103,12 @@ class Workflow:
         return tb.node('write_results_to_csv',
                        results_dict=self.variable_cell_fixed_TM.results_dict,
                        csv_name='results_variable_cell_fixed_TM.csv')
+
+    tb.task
+    def write_kpt_csv_variable_cell_fixed_TM(self):
+        return tb.node('write_kpts_to_csv',
+                       results_dict=self.variable_cell_fixed_TM.results_dict,
+                       csv_name='ktps_variable_cell_fixed_TM.csv')
 
 
 def workflow(runner):

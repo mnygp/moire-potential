@@ -93,3 +93,61 @@ def get_vacuum_and_band_edges(gpw_file: str, soc=False):
         "lumo": lumo_rel,
         "bandgap": lumo-homo,
     }
+
+
+def gap_and_kpts(atoms, functional, kpts, soc=False, occ_thresh=0.5):
+
+    calc = GPAW(
+        mode=PW(500),  # Basis set
+        xc=functional,  # Functional
+        kpts={"size": (kpts, kpts, 1)},  # k-points
+        occupations=FermiDirac(0.01),
+        txt=None,
+        symmetry='off'
+    )
+
+    atoms.calc = calc
+    atoms.get_potential_energy()
+
+    bz_kpts = calc.get_bz_k_points()
+
+    if soc:
+        soc_eig = soc_eigenstates(calc)
+        eigs = soc_eig.eigenvalues()
+        occ = soc_eig.occupation_numbers()
+    else:
+        nkpts = len(bz_kpts)  # number of k-points in the BZ
+        eigs = np.array([calc.get_eigenvalues(kpt=k) for k in range(nkpts)])
+        occ = np.array([calc.get_occupation_numbers(kpt=k, raw=True)
+                        for k in range(nkpts)])
+
+    global_homo = -np.inf
+    global_lumo = np.inf
+    homo_kpt = None
+    lumo_kpt = None
+
+    # Loop over k-points to find global HOMO/LUMO
+    for i, (kpt_eigs, kpt_occ, kpt) in enumerate(zip(eigs, occ, bz_kpts)):
+        # Occupied/unoccupied masks
+        occ_mask = kpt_occ > occ_thresh
+        unocc_mask = kpt_occ <= occ_thresh
+
+        if np.any(occ_mask):
+            kpt_homo = np.max(kpt_eigs[occ_mask])
+            if kpt_homo > global_homo:
+                global_homo = kpt_homo
+                homo_kpt = kpt
+
+        if np.any(unocc_mask):
+            kpt_lumo = np.min(kpt_eigs[unocc_mask])
+            if kpt_lumo < global_lumo:
+                global_lumo = kpt_lumo
+                lumo_kpt = kpt
+
+    return {
+        "gap": global_lumo - global_homo,
+        "lumo": global_lumo,
+        "homo": global_homo,
+        "lumo_kpt": lumo_kpt,
+        "homo_kpt": homo_kpt,
+    }
