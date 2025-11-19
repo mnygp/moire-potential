@@ -95,7 +95,13 @@ def get_vacuum_and_band_edges(gpw_file: str, soc=False):
     }
 
 
-def gap_and_kpts(atoms, functional, kpts, soc=False, occ_thresh=0.5):
+def gap_and_kpts(atom_path, functional, kpts, soc=False, occ_thresh=0.5):
+    if isinstance(atom_path, Path):
+        atoms = read(atom_path)
+    elif isinstance(atom_path, Atoms):
+        atoms = atom_path
+    else:
+        raise TypeError("atom_path must be a Path or Atoms object")
 
     calc = GPAW(
         mode=PW(500),  # Basis set
