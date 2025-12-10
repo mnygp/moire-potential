@@ -10,7 +10,7 @@ v1 = atoms.cell[0, :2]
 v2 = atoms.cell[1, :2]
 print(v1, v2)
 
-data = np.genfromtxt('results_fixed_cell_fixed_TM.csv', dtype=float,
+data = np.genfromtxt('results_fixed_cell_fixed_TM_PBE.csv', dtype=float,
                      skip_header=1, delimiter=',')
 
 
@@ -47,19 +47,25 @@ X, Y = np.meshgrid(np.linspace(min(x), max(x), 800),
 # Non corrected gap
 interpolated_gap = gap_interp(X, Y)
 
-# Use imshow for visualization
+plt.figure(figsize=(6, 5))
+
+v_min = np.nanmin((interpolated_gap - np.nanmin(interpolated_gap))*1000)
+v_max = np.nanmax((interpolated_gap - np.nanmin(interpolated_gap))*1000)
+
 im = plt.imshow(
     (interpolated_gap - np.nanmin(interpolated_gap)) * 1000,
     origin='lower',
     extent=[np.min(x), np.max(x), np.min(y), np.max(y)],
     cmap='viridis',
-    aspect='equal'
+    aspect='equal',
+    vmin=v_min,
+    vmax=v_max
 )
 
 plt.colorbar(im, label="Gap [meV]")
 plt.title("Non-corrected local band gap")
-plt.xlabel("x")
-plt.ylabel("y")
+plt.xlabel("x [Å]")
+plt.ylabel("y [Å]")
 plt.tight_layout()
 plt.savefig("plots/non-corrected-gap.png", dpi=500)
 plt.close()
@@ -96,13 +102,14 @@ im = plt.imshow(
     origin='lower',
     extent=[np.min(x), np.max(x), np.min(y), np.max(y)],
     cmap='viridis',
-    aspect='equal'
+    aspect='equal',
+    vmin=v_min,
+    vmax=v_max
 )
-plt.colorbar(im, label="Gap [eV]")
+plt.colorbar(im, label="Gap [meV]")
 plt.title("Corrected Gap")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.axis("equal")
+plt.xlabel("x [Å]")
+plt.ylabel("y [Å]")
 plt.tight_layout()
 plt.savefig("plots/corrected-gap.png", dpi=500)
 plt.close()
