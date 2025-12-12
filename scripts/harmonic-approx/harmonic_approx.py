@@ -136,6 +136,11 @@ plt.ylabel("Band gap [meV]")
 plt.tight_layout()
 plt.grid()
 plt.savefig("non-corrected-fits.png", dpi=500)
+
+plt.hlines(min(gap_line[132: 330]) + 44.9, 15, 70, colors='C1', linestyles='dashed', alpha=0.75)
+plt.hlines(min(gap_line[132: 330]) + 22.7, 55, 110, colors='C2', linestyles='dashed', alpha=0.75)
+plt.savefig("non-corrected-fits-with-eig.png", dpi=500)
+
 plt.close()
 
 print("############## Corrected gap plot ################")
@@ -171,4 +176,7 @@ plt.ylabel("Band gap [meV]")
 plt.tight_layout()
 plt.grid()
 plt.savefig("corrected-fits.png", dpi=500)
+
+plt.hlines(min(gap_c_line_w) + 37.5, 50, 110, colors='C1', linestyles='dashed', alpha=0.75)
+plt.savefig("corrected-fits-with eig.png", dpi=500)
 plt.close()
