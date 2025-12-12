@@ -95,7 +95,7 @@ def get_vacuum_and_band_edges(gpw_file: str, soc=False):
     }
 
 
-def gap_and_kpts(atom_path, functional, kpts, soc=False, occ_thresh=0.5):
+def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5):
     if isinstance(atom_path, Path):
         atoms = read(atom_path)
     elif isinstance(atom_path, Atoms):
@@ -108,8 +108,7 @@ def gap_and_kpts(atom_path, functional, kpts, soc=False, occ_thresh=0.5):
         xc=functional,  # Functional
         kpts={"size": (kpts, kpts, 1)},  # k-points
         occupations=FermiDirac(0.01),
-        txt=None,
-        symmetry='off'
+        txt='gpaw.txt',
     )
 
     atoms.calc = calc
@@ -117,15 +116,10 @@ def gap_and_kpts(atom_path, functional, kpts, soc=False, occ_thresh=0.5):
 
     bz_kpts = calc.get_bz_k_points()
 
-    if soc:
-        soc_eig = soc_eigenstates(calc)
-        eigs = soc_eig.eigenvalues()
-        occ = soc_eig.occupation_numbers()
-    else:
-        nkpts = len(bz_kpts)  # number of k-points in the BZ
-        eigs = np.array([calc.get_eigenvalues(kpt=k) for k in range(nkpts)])
-        occ = np.array([calc.get_occupation_numbers(kpt=k, raw=True)
-                        for k in range(nkpts)])
+    soc_eig = soc_eigenstates(calc)
+    eigs = soc_eig.eigenvalues()
+    occ = soc_eig.occupation_numbers()
+
 
     global_homo = -np.inf
     global_lumo = np.inf
