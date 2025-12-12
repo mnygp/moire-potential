@@ -242,3 +242,34 @@ def remove_isolated(atoms: Atoms, indices: list[int]) -> Atoms:
     # Remove the most isolated atom
     del atoms[indices[np.argmax(distances)]]
     return atoms
+
+
+def generate_scissor_shifts(atom_path: Path) -> list[tuple[float, float, int]]:
+    atoms = read(atom_path)
+    # Shift values read of from C2DB
+    MoS2_unocc_corr = 2.533 - 1.654
+    MoS2_occ_corr = 0.001 - 0.073
+    WSe2_unocc_corr = 2.127 - 1.702
+    WSe2_occ_corr = 0.000 - 0.464
+
+    #Find out what layers have what indices
+    MoS2_indices = []
+    WSe2_indices = []
+    indices = atoms.get_chemical_symbols()
+    for i, ind in enumerate(indices):
+        if ind == 'Mo' or ind == 'S':
+            MoS2_indices.append(i)
+        elif ind == 'W' or ind == 'Se':
+            WSe2_indices.append(i)
+
+    shift_arr = []
+
+    for i in range(len(atoms)):
+        if i in MoS2_indices:
+            shift_arr.append((MoS2_occ_corr, MoS2_unocc_corr, 1))
+        elif i in WSe2_indices:
+            shift_arr.append((WSe2_occ_corr, WSe2_unocc_corr, 1))
+        else:
+            raise ValueError("Atom not recognized as part of either layer.")
+        
+    return shift_arr
