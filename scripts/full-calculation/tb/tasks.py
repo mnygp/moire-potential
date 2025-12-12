@@ -16,13 +16,11 @@ from ase.calculators.dftd3 import DFTD3
 
 from gpaw import PW  # type: ignore
 from gpaw.new.ase_interface import GPAW
-from gpaw.spinorbit import soc_eigenstates
-
 
 from functions.structure import create_bilayer
-from functions.bandstructure import calc_gap, gap_and_kpts
+from functions.bandstructure import gap_and_kpts
 from functions.geometry import interlayer_distance, get_shifts, strain
-from functions.util import get_z_dist, repeate_cells, generate_scissor_shifts
+from functions.util import get_z_dist, repeate_cells
 
 
 @tb.dynamical_workflow_generator_task
@@ -89,10 +87,6 @@ class single_cell:
     @tb.task
     def calculate_gap_and_z(self):
         return tb.node("gap_z_dist_and_kpts", atom_path=self.relax)
-
-    @tb.task
-    def scissors(self):
-        return tb.node("scissors", atom_path=self.relax)
 
     @tb.task
     def correction(self):
@@ -175,7 +169,7 @@ def relaxation(
 
 
 def gap_z_dist_and_kpts(atom_path) -> dict:
-    gap = gap_and_kpts(atom_path, kpts=28, functional="HSE06")
+    gap = gap_and_kpts(atom_path, kpts=28, functional="PBE", scissors=True)
     z_dist = get_z_dist(atom_path)
     return {
         "gap": gap["gap"],
@@ -282,41 +276,6 @@ def strain_correction(
     correction_val = correction_interp([MoS2_strain + 1, WSe2_strain + 1])
 
     return [(correction_val - ref_val)[0], MoS2_strain]
-
-
-def scissors(atom_path: Path, k = 30):
-    atoms = read(atom_path)
-    
-    shift_arr = generate_scissor_shifts(atom_path)
-        
-    calc = GPAW(mode='lcao',
-                basis='dzp',
-                kpts=dict(size=(k, k, 1), gamma=True),
-                eigensolver={'name': 'scissors',
-                             'shifts': shift_arr},
-                txt='gpaw.txt')
-    
-    atoms.calc = calc
-
-    atoms.get_potential_energy()
-
-
-    soc_eig = soc_eigenstates(calc)
-    eigs = soc_eig.eigenvalues()
-    occ = soc_eig.occupation_numbers()
-
-    energies = eigs.ravel()
-    occs = occ.ravel()
-
-    occ_thresh = 0.5
-    occupied_energies = energies[occs > occ_thresh]
-    unoccupied_energies = energies[occs <= occ_thresh]
-
-    homo = occupied_energies.max()
-    lumo = unoccupied_energies.min()
-
-
-    return lumo - homo, lumo, homo
 
 
 def return_as_dict(

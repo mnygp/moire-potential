@@ -42,7 +42,7 @@ class Workflow:
     def write_kpt_csv_fixed_cell_fixed_TM(self):
         return tb.node('write_kpts_to_csv',
                        results_dict=self.fixed_cell_fixed_TM.results_dict,
-                       csv_name='ktps_fixed_cell_fixed_TM.csv')
+                       csv_name='ktps_fixed_cell_fixed_TM_scissors.csv')
     
     """
     # Fixed cell size and variable TM position

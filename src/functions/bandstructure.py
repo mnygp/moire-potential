@@ -5,6 +5,7 @@ from gpaw.spinorbit import soc_eigenstates
 from pathlib import Path
 import numpy as np
 
+from functions.util import generate_scissor_shifts
 
 def calc_gap(
     atom_path: Path | Atoms,
@@ -95,7 +96,7 @@ def get_vacuum_and_band_edges(gpw_file: str, soc=False):
     }
 
 
-def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5):
+def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5, scissors=False):
     if isinstance(atom_path, Path):
         atoms = read(atom_path)
     elif isinstance(atom_path, Atoms):
@@ -103,13 +104,22 @@ def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5):
     else:
         raise TypeError("atom_path must be a Path or Atoms object")
 
-    calc = GPAW(
-        mode=PW(500),  # Basis set
-        xc=functional,  # Functional
-        kpts={"size": (kpts, kpts, 1)},  # k-points
-        occupations=FermiDirac(0.01),
-        txt='gpaw.txt',
-    )
+    if scissors:
+        shift_arr = generate_scissor_shifts(atom_path)
+        calc = GPAW(mode='lcao',
+                    basis='dzp',
+                    kpts=dict(size=(kpts, kpts, 1), gamma=True),
+                    eigensolver={'name': 'scissors',
+                                'shifts': shift_arr},
+                    txt='gpaw.txt')
+    else:
+        calc = GPAW(
+            mode=PW(500),  # Basis set
+            xc=functional,  # Functional
+            kpts={"size": (kpts, kpts, 1)},  # k-points
+            occupations=FermiDirac(0.01),
+            txt='gpaw.txt',
+        )
 
     atoms.calc = calc
     atoms.get_potential_energy()
