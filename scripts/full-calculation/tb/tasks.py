@@ -282,27 +282,25 @@ def return_as_dict(
     x: float,
     y: float,
     z_ml: float,
-    gap_and_z: list[float],
+    gap_and_z: dict, 
     i: int,
     j: int,
     correction: list[float],
     W_strain: float,
-    lumo_kpts: tuple[float, float, float],
-    homo_kpts: tuple[float, float, float],
 ) -> dict:
     return {
         "x": x,
         "y": y,
         "z_ml": z_ml,
-        "z_dft": gap_and_z[1],
+        "z_dft": gap_and_z['z_dist'],
         "i": i,
         "j": j,
-        "gap": gap_and_z[0],
+        "gap": gap_and_z['gap'],
         "correction": correction[0],
         "Mo_strain": correction[1],
         "W_strain": W_strain,
-        "lumo_kpts": lumo_kpts,
-        "Homo_kpts": homo_kpts,
+        "lumo_kpts": gap_and_z['lumo_kpt'],
+        "homo_kpts": gap_and_z['homo_kpt'],
     }
 
 
@@ -368,9 +366,12 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
 
 def write_Mo_pos_to_csv(results_dict: dict, csv_name: str) -> Path:
     rows = []
-    for name, d in results_dict.items():
-        rows.append({"x_Mo": d["x_Mo"], "y_Mo": d["y_Mo"]})
-
+    x = results_dict['x_Mo']
+    y = results_dict['y_Mo']
+    for xi, yi in zip(x, y):
+        rows.append({"x_Mo": float(xi),
+                     "y_Mo": float(yi),
+                    })
     # Write the CSV
     with open(csv_name, mode="w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["x_Mo", "y_Mo"])
