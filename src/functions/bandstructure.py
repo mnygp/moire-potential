@@ -1,6 +1,7 @@
 from ase.io import read
 from ase import Atoms
-from gpaw import GPAW, PW, FermiDirac
+from gpaw import PW, FermiDirac
+from gpaw.new.ase_interface import GPAW
 from gpaw.spinorbit import soc_eigenstates
 from pathlib import Path
 import numpy as np
@@ -12,7 +13,9 @@ def calc_gap(
     functional: str = "PBE",
     kpts: int = 18,
     pw_cut: float = 500,
+    mode: str = "pw",
     soc: bool = False,
+    eigensolver: dict | None = None,
 ) -> tuple[float, float, float]:
 
     if isinstance(atom_path, Path):
@@ -22,13 +25,47 @@ def calc_gap(
     else:
         raise TypeError("atom_path must be a Path or Atoms object")
 
-    calc = GPAW(
-        mode=PW(pw_cut),  # Basis set
-        xc=functional,  # Functional
-        kpts={"size": (kpts, kpts, 1)},  # k-points
-        occupations=FermiDirac(0.01),
-        txt=None,
-    )
+    # TODO: Refactor this fucking mess
+    # Parse dict for calc parameters
+    if eigensolver is not None:
+        calc = GPAW(
+            mode=PW(pw_cut),  # Basis set
+            xc=functional,  # Functional
+            kpts={"size": (kpts, kpts, 1)},  # k-points
+            occupations=FermiDirac(0.01),
+            eigensolver=eigensolver,
+            txt=None,
+        )
+    else:
+        calc = GPAW(
+            mode=PW(pw_cut),  # Basis set
+            xc=functional,  # Functional
+            kpts={"size": (kpts, kpts, 1)},  # k-points
+            occupations=FermiDirac(0.01),
+            txt=None,
+        )
+
+    if mode == "lcao":
+        if eigensolver is not None:
+            calc = GPAW(
+                mode='lcao',
+                basis='dzp',
+                xc=functional,
+                kpts={"size": (kpts, kpts, 1)},
+                occupations=FermiDirac(0.01),
+                eigensolver=eigensolver,
+                txt=None,
+            )
+        else:
+            calc = GPAW(
+                mode='lcao',
+                basis='dzp',
+                xc=functional,
+                kpts={"size": (kpts, kpts, 1)},
+                occupations=FermiDirac(0.01),
+                txt=None,
+            )
+
 
     atoms.calc = calc
     atoms.get_potential_energy()
