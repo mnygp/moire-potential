@@ -148,7 +148,7 @@ def relaxation(
     else:
         atoms.set_constraint(FixedLine(indices=indices, direction=[0, 0, 1]))
 
-    calc = GPAW(mode=PW(500), xc="PBE", kpts={"size": (8, 8, 1)})
+    calc = GPAW(mode=PW(800), xc="PBE", kpts={"size": (10, 10, 1)})
     d3_calc = DFTD3(dft=calc, xc="PBE")
     atoms.calc = d3_calc
 

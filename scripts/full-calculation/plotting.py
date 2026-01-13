@@ -10,7 +10,7 @@ v1 = atoms.cell[0, :2]
 v2 = atoms.cell[1, :2]
 print(v1, v2)
 
-data = np.genfromtxt('results_fixed_cell_fixed_TM_PBE.csv', dtype=float,
+data = np.genfromtxt('results_fixed_cell_fixed_TM_scissors.csv', dtype=float,
                      skip_header=1, delimiter=',')
 
 
