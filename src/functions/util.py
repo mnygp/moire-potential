@@ -244,13 +244,16 @@ def remove_isolated(atoms: Atoms, indices: list[int]) -> Atoms:
     return atoms
 
 
-def generate_scissor_shifts(atom_path: Path) -> list[tuple[float, float, int]]:
-    atoms = read(atom_path)
-    # Shift values read of from C2DB
-    MoS2_unocc_corr = 2.533 - 1.654
-    MoS2_occ_corr = 0.001 - 0.073
-    WSe2_unocc_corr = 2.127 - 1.702
-    WSe2_occ_corr = 0.000 - 0.464
+def generate_scissor_shifts(atom_path: Path | Atoms) -> list[tuple[float, float, int]]:
+    if isinstance(atom_path, Atoms):
+        atoms = atom_path
+    else:
+        atoms = read(atom_path)
+    # Shift values read of from C2DB the third number us the screening
+    MoS2_unocc_corr = 2.533 - 1.654 + (-0.08886783453907064)
+    MoS2_occ_corr = 0.001 - 0.073 + (0.07683854934684342)
+    WSe2_unocc_corr = 2.127 - 1.702 + (-0.0811779263106481)
+    WSe2_occ_corr = 0.000 - 0.464 + (0.06864835556460903)
 
     #Find out what layers have what indices
     MoS2_indices = []
