@@ -6,7 +6,7 @@ z_arr = np.linspace(6, 7, 15)
 strain_arr = np.linspace(0.99, 1.01, 14)
 
 for shift in [0.0, 0.4]:
-    filename = f'gap_sensitivity_shift_{shift:.2f}.csv'
+    filename = f"gap_sensitivity_shift_{shift:.2f}.csv"
 
     gaps = []
 
@@ -28,12 +28,16 @@ for shift in [0.0, 0.4]:
     im = plt.imshow(
         gap_grid,
         origin="lower",
-        extent=[min((strain_arr - 1)*100), max((strain_arr - 1)*100),
-                min(z_arr), max(z_arr)],
+        extent=[
+            min((strain_arr - 1) * 100),
+            max((strain_arr - 1) * 100),
+            min(z_arr),
+            max(z_arr),
+        ],
         aspect="auto",
         cmap="viridis",
         vmin=0.2,
-        vmax=1.1
+        vmax=1.1,
     )
 
     # Colorbar
@@ -45,9 +49,4 @@ for shift in [0.0, 0.4]:
     plt.ylabel("z distance [Å]")
     plt.title(f"Band gap vs. z distance and strain (shift = {shift:.2f})")
     plt.tight_layout()
-    plt.savefig(f'gap_sensitivity_shift_{shift:.2f}.png', dpi=500)
-
-
-
-
-
+    plt.savefig(f"gap_sensitivity_shift_{shift:.2f}.png", dpi=500)

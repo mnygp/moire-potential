@@ -7,10 +7,11 @@ from ase.io import read
 from scipy.interpolate import LinearNDInterpolator
 
 # The medium data set goes from -2% to 2% along both axis
-data = np.genfromtxt("band_edges_medium_soc.csv",
-                     skip_header=1, dtype=float, delimiter=",")
+data = np.genfromtxt(
+    "band_edges_medium_soc.csv", skip_header=1, dtype=float, delimiter=","
+)
 
-strain_data = (data[:, 0] - 1)
+strain_data = data[:, 0] - 1
 MoS2_homo = data[:, 1]
 MoS2_lumo = data[:, 2]
 WSe2_homo = data[:, 3]
@@ -38,10 +39,14 @@ plt.close()
 # ############### Plot gap as a function of strain ############################
 im = plt.imshow(
     band_gap_grid,  # - ref_gap,
-    extent=(strain_data[0]*100, strain_data[-1]*100,
-            strain_data[0]*100, strain_data[-1]*100),
+    extent=(
+        strain_data[0] * 100,
+        strain_data[-1] * 100,
+        strain_data[0] * 100,
+        strain_data[-1] * 100,
+    ),
     origin="lower",
-    interpolation='spline16'
+    interpolation="spline16",
 )
 plt.xlabel("MoS2 strain [%]")
 plt.ylabel("WSe2 strain [%]")
@@ -52,8 +57,7 @@ plt.savefig("band-gap-grid-medium-soc.png", dpi=500)
 plt.close()
 
 # ############### Plot actual strain values on strain map ####################
-struct = read("../../structures/MoS2-WSe2-MatterSim/"
-              "1.11_2946/structure_ml.json")
+struct = read("../../structures/MoS2-WSe2-MatterSim/1.11_2946/structure_ml.json")
 
 x_Mo, y_Mo, Mo_strain = strain(struct, "Mo")
 x_W, y_W, W_strain = strain(struct, "W")
@@ -67,8 +71,7 @@ x_W, y_W, W_strain = strain(struct, "W")
     struct.cell[1, :2],  # type: ignore
 )
 
-W_strain_interp = LinearNDInterpolator(list(zip(x_W_large, y_W_large)),
-                                       W_strain_large)
+W_strain_interp = LinearNDInterpolator(list(zip(x_W_large, y_W_large)), W_strain_large)
 
 interp_W_strain = W_strain_interp(x_Mo, y_Mo)
 
@@ -80,16 +83,15 @@ ax1 = fig.add_subplot(gs[0])
 ax2 = fig.add_subplot(gs[1])
 
 im = ax1.imshow(
-    band_gap_correction*1000,
+    band_gap_correction * 1000,
     extent=(strain_data[0], strain_data[-1], strain_data[0], strain_data[-1]),
     origin="lower",
     interpolation="spline16",
     vmin=40,
-    vmax=160
+    vmax=160,
 )
 
-ax1.scatter(Mo_strain, interp_W_strain, marker="x",
-            color="black", label="Values at ")
+ax1.scatter(Mo_strain, interp_W_strain, marker="x", color="black", label="Values at ")
 
 ax1.set_xlabel("MoS2 strain [%]")
 ax1.set_ylabel("WSe2 strain [%]")
@@ -107,7 +109,7 @@ corrections = correction_interp(list(zip(Mo_strain, interp_W_strain)))
 ax1.set_xlim(-0.003, 0.006)
 ax1.set_ylim(-0.003, 0.008)
 
-ax2.hist(corrections*1000, bins=50)
+ax2.hist(corrections * 1000, bins=50)
 ax2.set_title("Histogram of the strain correction at every Mo atom")
 ax2.set_xlabel("Strain correction [meV]")
 plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.08, hspace=0.25)
@@ -122,8 +124,9 @@ X, Y = np.meshgrid(np.linspace(-36, 72, 800), np.linspace(0, 63, 800))
 # interpolated_dist = dist_interp(X, Y)
 interpolated_gap = correction_interp(X, Y)
 
-mesh = plt.pcolormesh(X, Y, (interpolated_gap - min(corrections))*1000,
-                      shading="auto")
+mesh = plt.pcolormesh(
+    X, Y, (interpolated_gap - min(corrections)) * 1000, shading="auto"
+)
 plt.colorbar(mesh, label="Change in band gap [meV]", cmap="viridis")
 plt.title("Strain correction")
 plt.xlabel("x")

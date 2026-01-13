@@ -27,12 +27,10 @@ def strain(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if layer not in ["top", "bottom"]:
         raise ValueError(
-            "Input not a valid layer type."
-            + " Choose either 'top' or 'bottom'."
+            "Input not a valid layer type." + " Choose either 'top' or 'bottom'."
         )
     if atom_type not in ["W", "Mo"]:
-        raise ValueError("Input not a valid atom type."
-                         + " Choose either 'W' or 'Mo'.")
+        raise ValueError("Input not a valid atom type." + " Choose either 'W' or 'Mo'.")
 
     symbols = np.array(atoms.get_chemical_symbols())
     positions = np.array(atoms.get_positions())
@@ -55,8 +53,7 @@ def strain(
 
     # Periodic boundary conditions
     x, y, z = repeate_cells(
-        T_metal[:, 0], T_metal[:, 1], T_metal[:, 2],
-        range(-1, 2), vector1, vector2
+        T_metal[:, 0], T_metal[:, 1], T_metal[:, 2], range(-1, 2), vector1, vector2
     )
     T_metal_large = np.array([x, y, z]).T
     strain_arr = np.zeros(len(T_metal[:, 0]))

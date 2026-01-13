@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import LinearNDInterpolator, CloughTocher2DInterpolator
+from scipy.interpolate import LinearNDInterpolator
 from functions import geometry
 import matplotlib.pyplot as plt
 from ase.io import read
@@ -10,9 +10,9 @@ WSe2_lattice = 3.319
 average_cell = np.array([[1, 0], [0.5, np.sqrt(3) / 2]]) * average_lattice
 
 # Small cell data for interpolation
-small_data = np.genfromtxt('../mapping/results_high_res.csv',
-                           skip_header=1,
-                           delimiter=',')
+small_data = np.genfromtxt(
+    "../mapping/results_high_res.csv", skip_header=1, delimiter=","
+)
 
 i = small_data[:, 0]
 j = small_data[:, 1]
@@ -63,13 +63,11 @@ large_interp_data = large_interpolator(large_diag_points)
 print(large_interp_data.shape)
 
 
-plt.plot(np.linspace(0, 1, resolution),
-         small_interp_data, label='DFT small cells')
-plt.plot(np.linspace(0, 1, resolution),
-         large_interp_data, label='MatterSim structure')
-plt.xlabel('Shift along diagonal [Normalized]')
-plt.ylabel('Interlayer Distance [Å]')
-plt.title('Interlayer Distance vs Lattice Shift along diagonal')
+plt.plot(np.linspace(0, 1, resolution), small_interp_data, label="DFT small cells")
+plt.plot(np.linspace(0, 1, resolution), large_interp_data, label="MatterSim structure")
+plt.xlabel("Shift along diagonal [Normalized]")
+plt.ylabel("Interlayer Distance [Å]")
+plt.title("Interlayer Distance vs Lattice Shift along diagonal")
 plt.legend()
 plt.tight_layout()
-plt.savefig('interlayer_distance_vs_shift_diagonal.png', dpi=500)
+plt.savefig("interlayer_distance_vs_shift_diagonal.png", dpi=500)

@@ -5,10 +5,7 @@ from ase.io import read
 
 
 def closest_index(
-    position: np.ndarray,
-    particles: np.ndarray,
-    index: int = 0,
-    twoD: bool = True
+    position: np.ndarray, particles: np.ndarray, index: int = 0, twoD: bool = True
 ) -> int:
     if twoD:
         r_diff = particles[:, :2] - position[:2]
@@ -68,8 +65,7 @@ def get_z_dist(atom_path: Path | Atoms) -> float:
     assert valid_struct, "Incorrect formula in atoms object"
 
     symb = np.array(atoms.get_chemical_symbols())
-    z_dist = (atoms[symb == 'W'].positions[0][2]
-              - atoms[symb == 'Mo'].positions[0][2])
+    z_dist = atoms[symb == "W"].positions[0][2] - atoms[symb == "Mo"].positions[0][2]
     return abs(z_dist)
 
 
@@ -190,8 +186,7 @@ def get_atom_obj(
             np.all(atom_coeffs >= 0, axis=1) & np.all(atom_coeffs < 1, axis=1)
         )
 
-        center_of_cell = (v1[i] / 2 + v2[i] / 2
-                          + origins[i] - (moire_v1 + moire_v2))
+        center_of_cell = v1[i] / 2 + v2[i] / 2 + origins[i] - (moire_v1 + moire_v2)
 
         for j in inside_cell_indices:
             atoms_cell += atoms_L[j]
@@ -255,14 +250,14 @@ def generate_scissor_shifts(atom_path: Path | Atoms) -> list[tuple[float, float,
     WSe2_unocc_corr = 2.127 - 1.702 + (-0.0811779263106481)
     WSe2_occ_corr = 0.000 - 0.464 + (0.06864835556460903)
 
-    #Find out what layers have what indices
+    # Find out what layers have what indices
     MoS2_indices = []
     WSe2_indices = []
     indices = atoms.get_chemical_symbols()
     for i, ind in enumerate(indices):
-        if ind == 'Mo' or ind == 'S':
+        if ind == "Mo" or ind == "S":
             MoS2_indices.append(i)
-        elif ind == 'W' or ind == 'Se':
+        elif ind == "W" or ind == "Se":
             WSe2_indices.append(i)
 
     shift_arr = []
@@ -274,5 +269,5 @@ def generate_scissor_shifts(atom_path: Path | Atoms) -> list[tuple[float, float,
             shift_arr.append((WSe2_occ_corr, WSe2_unocc_corr, 1))
         else:
             raise ValueError("Atom not recognized as part of either layer.")
-        
+
     return shift_arr

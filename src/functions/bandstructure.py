@@ -8,6 +8,7 @@ import numpy as np
 
 from functions.util import generate_scissor_shifts
 
+
 def calc_gap(
     atom_path: Path | Atoms,
     functional: str = "PBE",
@@ -17,7 +18,6 @@ def calc_gap(
     soc: bool = False,
     eigensolver: dict | None = None,
 ) -> tuple[float, float, float]:
-
     if isinstance(atom_path, Path):
         atoms = read(atom_path)
     elif isinstance(atom_path, Atoms):
@@ -48,8 +48,8 @@ def calc_gap(
     if mode == "lcao":
         if eigensolver is not None:
             calc = GPAW(
-                mode='lcao',
-                basis='dzp',
+                mode="lcao",
+                basis="dzp",
                 xc=functional,
                 kpts={"size": (kpts, kpts, 1)},
                 occupations=FermiDirac(0.01),
@@ -58,14 +58,13 @@ def calc_gap(
             )
         else:
             calc = GPAW(
-                mode='lcao',
-                basis='dzp',
+                mode="lcao",
+                basis="dzp",
                 xc=functional,
                 kpts={"size": (kpts, kpts, 1)},
                 occupations=FermiDirac(0.01),
                 txt=None,
             )
-
 
     atoms.calc = calc
     atoms.get_potential_energy()
@@ -129,7 +128,7 @@ def get_vacuum_and_band_edges(gpw_file: str, soc=False):
         "vacuum_level": vacuum_level,
         "homo": homo_rel,
         "lumo": lumo_rel,
-        "bandgap": lumo-homo,
+        "bandgap": lumo - homo,
     }
 
 
@@ -143,19 +142,20 @@ def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5, scissors=False):
 
     if scissors:
         shift_arr = generate_scissor_shifts(atom_path)
-        calc = GPAW(mode='lcao',
-                    basis='dzp',
-                    kpts=dict(size=(kpts, kpts, 1), gamma=True),
-                    eigensolver={'name': 'scissors',
-                                'shifts': shift_arr},
-                    txt='gpaw.txt')
+        calc = GPAW(
+            mode="lcao",
+            basis="dzp",
+            kpts=dict(size=(kpts, kpts, 1), gamma=True),
+            eigensolver={"name": "scissors", "shifts": shift_arr},
+            txt="gpaw.txt",
+        )
     else:
         calc = GPAW(
             mode=PW(500),  # Basis set
             xc=functional,  # Functional
             kpts={"size": (kpts, kpts, 1)},  # k-points
             occupations=FermiDirac(0.01),
-            txt='gpaw.txt',
+            txt="gpaw.txt",
         )
 
     atoms.calc = calc
@@ -166,7 +166,6 @@ def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5, scissors=False):
     soc_eig = soc_eigenstates(calc)
     eigs = soc_eig.eigenvalues()
     occ = soc_eig.occupation_numbers()
-
 
     global_homo = -np.inf
     global_lumo = np.inf

@@ -1,8 +1,9 @@
 import numpy as np
 
 
-data = np.genfromtxt('ktps_fixed_cell_fixed_TM_scissors.csv', dtype=float,
-                     skip_header=1, delimiter=',')
+data = np.genfromtxt(
+    "ktps_fixed_cell_fixed_TM_scissors.csv", dtype=float, skip_header=1, delimiter=","
+)
 
 K_point = True
 

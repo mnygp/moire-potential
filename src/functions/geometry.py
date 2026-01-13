@@ -1,9 +1,6 @@
 import numpy as np
 import warnings
-from functions.util import (closest_index,
-                            repeate_cells,
-                            get_cells,
-                            get_atom_obj)
+from functions.util import closest_index, repeate_cells, get_cells, get_atom_obj
 from ase import Atoms
 from ase.io import write
 import os

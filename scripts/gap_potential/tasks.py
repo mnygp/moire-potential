@@ -14,17 +14,18 @@ from functions.bandstructure import calc_gap
 
 @tb.dynamical_workflow_generator_task
 def generate_wfs_task(result_dict):
-
-    atom_paths = result_dict['atoms']
-    atom_extra_dist_paths = result_dict['extra_dist_atoms']
-    centers = result_dict['centers']
+    atom_paths = result_dict["atoms"]
+    atom_extra_dist_paths = result_dict["extra_dist_atoms"]
+    centers = result_dict["centers"]
 
     for i in range(len(atom_paths)):
-        wf = real_dist_workflow(atom=atom_paths[i],
-                                extra_dist_atom=atom_extra_dist_paths[i],
-                                center=centers[i],
-                                number=i)
-        name = f'gap_{i}'
+        wf = real_dist_workflow(
+            atom=atom_paths[i],
+            extra_dist_atom=atom_extra_dist_paths[i],
+            center=centers[i],
+            number=i,
+        )
+        name = f"gap_{i}"
         yield name, wf
 
 
@@ -37,43 +38,45 @@ class real_dist_workflow:
 
     @tb.task
     def calc_gap_task(self):
-        return tb.node('calculate_gap',
-                       atom=self.atom,
-                       center=self.center,
-                       number=self.number)
+        return tb.node(
+            "calculate_gap", atom=self.atom, center=self.center, number=self.number
+        )
 
     @tb.task
     def calc_extra_gap_task(self):
-        return tb.node('calculate_gap',
-                       atom=self.extra_dist_atom,
-                       center=self.center,
-                       number=self.number)
+        return tb.node(
+            "calculate_gap",
+            atom=self.extra_dist_atom,
+            center=self.center,
+            number=self.number,
+        )
 
 
 def calculate_gap(atom: Path, center: list[float], number: int):
     gap = calc_gap(atom, kpts=36)
-    return {'gap': gap, 'center': center, 'number': number}
+    return {"gap": gap, "center": center, "number": number}
 
 
 def write_results_to_csv(results_dict: dict, csv_name: str) -> Path:
     rows = []
     for name, d in results_dict.items():
-        center = d['center']
-        gap = d['gap']
+        center = d["center"]
+        gap = d["gap"]
 
-        if 'gap' in name:
-            rows.append({
-                "name": name,
-                "gap": gap,
-                "x": center[0],
-                "y": center[1],
-                "z": center[2]
-            })
+        if "gap" in name:
+            rows.append(
+                {
+                    "name": name,
+                    "gap": gap,
+                    "x": center[0],
+                    "y": center[1],
+                    "z": center[2],
+                }
+            )
 
     csv_path = Path(csv_name)
     with open(csv_path, mode="w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile,
-                                fieldnames=["name", "gap", "x", "y", "z"])
+        writer = csv.DictWriter(csvfile, fieldnames=["name", "gap", "x", "y", "z"])
         writer.writeheader()
         writer.writerows(rows)
 
@@ -96,17 +99,19 @@ def create_atoms_list(file: str) -> dict[str, list[Path | list[float] | str]]:
     atoms_extra_dist_path = []
 
     for i, atoms in enumerate(atoms_arr):
-        write(f'atom_files/atoms_{i}.xyz', atoms)
-        atoms_paths.append(Path(f'atom_files/atoms_{i}.xyz'))
+        write(f"atom_files/atoms_{i}.xyz", atoms)
+        atoms_paths.append(Path(f"atom_files/atoms_{i}.xyz"))
 
         atoms_extra_dist = add_distance(atoms, 5.0)
-        write(f'extra_dist_files/atoms_{i}.xyz', atoms_extra_dist)
-        atoms_extra_dist_path.append(Path(f'extra_dist_files/atoms_{i}.xyz'))
+        write(f"extra_dist_files/atoms_{i}.xyz", atoms_extra_dist)
+        atoms_extra_dist_path.append(Path(f"extra_dist_files/atoms_{i}.xyz"))
 
-    return {'atoms': atoms_paths,
-            'extra_dist_atoms': atoms_extra_dist_path,
-            'centers': centers.tolist(),
-            'origins': origins.tolist()}
+    return {
+        "atoms": atoms_paths,
+        "extra_dist_atoms": atoms_extra_dist_path,
+        "centers": centers.tolist(),
+        "origins": origins.tolist(),
+    }
 
 
 def get_path(structure_name: str) -> str:
@@ -114,16 +119,18 @@ def get_path(structure_name: str) -> str:
     print(f"Current path: {current_path}")
 
     for parent in current_path.parents:
-        if parent.name == 'moire-potential':
+        if parent.name == "moire-potential":
             base_dir = parent
             break
     else:
-        raise FileNotFoundError("Could not find a directory" +
-                                "named moire-potential in the" +
-                                f" path {current_path}")
+        raise FileNotFoundError(
+            "Could not find a directory"
+            + "named moire-potential in the"
+            + f" path {current_path}"
+        )
     print(f"Base directory: {base_dir}")
 
-    file = base_dir / 'structures' / structure_name / 'structure_ml.json'
+    file = base_dir / "structures" / structure_name / "structure_ml.json"
     if not file.exists():
         raise FileNotFoundError(f"File {file} does not exist.")
     print(f"File path: {file}")
@@ -135,17 +142,17 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     atoms_L = atoms.repeat((3, 3, 1))
 
     W_pos = atoms.positions[atoms.symbols == "W"]
-    W_pos += (atoms.cell[0] + atoms.cell[1])
+    W_pos += atoms.cell[0] + atoms.cell[1]
 
     W_L_pos = atoms_L.positions[atoms_L.symbols == "W"]
 
     approx_v1 = W_pos[closest_index(W_pos[0], W_pos, index=1)] - W_pos[0]
 
-    rot_matrix = np.array([[0.5, -np.sqrt(3)/2, 0],
-                           [np.sqrt(3)/2, 0.5, 0],
-                           [0, 0, 1]])
+    rot_matrix = np.array(
+        [[0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, 0.5, 0], [0, 0, 1]]
+    )
 
-    approx_v2 = rot_matrix@approx_v1
+    approx_v2 = rot_matrix @ approx_v1
 
     v1_arr = np.array([])
     v2_arr = np.array([])
@@ -155,8 +162,8 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         v1_end = W_L_pos[closest_index(pos + approx_v1, W_L_pos)]
         v2_end = W_L_pos[closest_index(pos + approx_v2, W_L_pos)]
 
-        v1 = (v1_end - pos)*0.999
-        v2 = (v2_end - pos)*0.999
+        v1 = (v1_end - pos) * 0.999
+        v2 = (v2_end - pos) * 0.999
 
         v1_arr = np.append(v1_arr, v1)
         v2_arr = np.append(v2_arr, v2)
@@ -172,16 +179,16 @@ def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return v1_arr, v2_arr, origins
 
 
-def get_atom_obj(atoms: Atoms, origins: np.ndarray,
-                 v1: np.ndarray, v2: np.ndarray) -> tuple[list[Atoms],
-                                                          np.ndarray]:
+def get_atom_obj(
+    atoms: Atoms, origins: np.ndarray, v1: np.ndarray, v2: np.ndarray
+) -> tuple[list[Atoms], np.ndarray]:
     moire_v1 = atoms.cell[0]
     moire_v2 = atoms.cell[1]
 
     atoms_L = atoms.repeat((3, 3, 1))
     atoms_L_pos = atoms_L.positions
 
-    origins += (moire_v1 + moire_v2)
+    origins += moire_v1 + moire_v2
 
     V = np.stack((v1[:, :2], v2[:, :2]), axis=-1)
     V_inv = np.linalg.inv(V)
@@ -198,10 +205,11 @@ def get_atom_obj(atoms: Atoms, origins: np.ndarray,
     for i in range(np.shape(coeffs)[1]):
         atoms_cell = Atoms()
         atom_coeffs = coeffs[:, i, :]
-        inside_cell_indices = np.where(np.all(atom_coeffs >= 0, axis=1)
-                                       & np.all(atom_coeffs < 1, axis=1))
+        inside_cell_indices = np.where(
+            np.all(atom_coeffs >= 0, axis=1) & np.all(atom_coeffs < 1, axis=1)
+        )
 
-        center_of_cell = v1[i]/2 + v2[i]/2 + origins[i] - (moire_v1 + moire_v2)
+        center_of_cell = v1[i] / 2 + v2[i] / 2 + origins[i] - (moire_v1 + moire_v2)
 
         for j in inside_cell_indices:
             atoms_cell += atoms_L[j]
@@ -220,7 +228,7 @@ def get_atom_obj(atoms: Atoms, origins: np.ndarray,
 
 
 def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
-    chemical_number = {'Mo': 1, 'W': 1, 'S': 2, 'Se': 2}
+    chemical_number = {"Mo": 1, "W": 1, "S": 2, "Se": 2}
 
     while not check_formula(atoms.get_chemical_symbols()):
         for atom_type in chemical_number.keys():
@@ -231,12 +239,12 @@ def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
                 # For S and Se, if there are 3 atoms, we want to keep
                 # the pair of atoms that are above each other
                 # and remove the one that is isolated
-                if len(indices) == 3 and (atom_type == 'S'
-                                          or atom_type == 'Se'):
+                if len(indices) == 3 and (atom_type == "S" or atom_type == "Se"):
                     remove_isolated(atoms, indices)
                 else:
-                    distances = np.array([dist(atoms.positions[i], origin)
-                                          for i in indices])
+                    distances = np.array(
+                        [dist(atoms.positions[i], origin) for i in indices]
+                    )
 
                     furthest_index = indices[np.argmax(distances)]
                     del atoms[furthest_index]

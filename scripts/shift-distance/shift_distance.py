@@ -13,11 +13,13 @@ data = []
 
 for i, shift in enumerate(shifts):
     for j, dist in enumerate(distances):
-        bilayer = create_bilayer(z_dist=dist, lattice_length=3.2515,
-                                 a_shift=shift, b_shift=shift)
+        bilayer = create_bilayer(
+            z_dist=dist, lattice_length=3.2515, a_shift=shift, b_shift=shift
+        )
 
-        calc = GPAW(mode=PW(500), xc='PBE', kpts={'size': (20, 20, 1)},
-                    txt='output.txt')
+        calc = GPAW(
+            mode=PW(500), xc="PBE", kpts={"size": (20, 20, 1)}, txt="output.txt"
+        )
 
         bilayer.calc = calc
 
@@ -31,15 +33,24 @@ for i, shift in enumerate(shifts):
 
 
 # Save CSV file with flat data
-np.savetxt("bandgap_data.csv", np.array(data), delimiter=",",
-           header="distance,shift,gap", comments='')
+np.savetxt(
+    "bandgap_data.csv",
+    np.array(data),
+    delimiter=",",
+    header="distance,shift,gap",
+    comments="",
+)
 
 # Plot heatmap from gap_matrix
 plt.figure(figsize=(6, 5))
-plt.imshow(gap_matrix, origin='lower',
-           extent=[distances[0], distances[-1], shifts[0], shifts[-1]],
-           aspect='auto', cmap='viridis')
-plt.colorbar(label='Band Gap (eV)')
+plt.imshow(
+    gap_matrix,
+    origin="lower",
+    extent=[distances[0], distances[-1], shifts[0], shifts[-1]],
+    aspect="auto",
+    cmap="viridis",
+)
+plt.colorbar(label="Band Gap (eV)")
 plt.xlabel("Interlayer Distance (Å)")
 plt.ylabel("Shift along diagonal")
 plt.title("Band Gap Heatmap for MoS2/WSe2")

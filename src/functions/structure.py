@@ -24,8 +24,7 @@ def create_bilayer(
 
     if constrain:
         indices = [
-            atom.index for atom in struct if (atom.symbol == "W"
-                                              or atom.symbol == "Mo")
+            atom.index for atom in struct if (atom.symbol == "W" or atom.symbol == "Mo")
         ]
         struct.set_constraint(FixedLine(indices=indices, direction=[0, 0, 1]))
 

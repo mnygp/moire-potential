@@ -8,7 +8,7 @@ jitter_strength = 0.3  # maximum distortion from ideal position
 
 # Hexagonal basis vectors
 a1 = np.array([1.0, 0.0])
-a2 = np.array([0.5, np.sqrt(3)/2])
+a2 = np.array([0.5, np.sqrt(3) / 2])
 
 # Generate grid of reference positions (ideal hexagonal)
 positions_ref = []
@@ -31,12 +31,24 @@ ax.set_aspect("equal")
 ax.axis("off")
 
 # Plot ideal positions
-ax.scatter(positions_ref[:, 0], positions_ref[:, 1],
-           s=80, color="gray", alpha=0.4, label="Ideal lattice")
+ax.scatter(
+    positions_ref[:, 0],
+    positions_ref[:, 1],
+    s=80,
+    color="gray",
+    alpha=0.4,
+    label="Ideal lattice",
+)
 
 # Plot shifted positions
-ax.scatter(positions_shifted[:, 0], positions_shifted[:, 1],
-           s=100, color="purple", alpha=0.8, label="Distorted atoms")
+ax.scatter(
+    positions_shifted[:, 0],
+    positions_shifted[:, 1],
+    s=100,
+    color="purple",
+    alpha=0.8,
+    label="Distorted atoms",
+)
 
 # Plot central atom
 ax.scatter(0, 0, s=120, color="red", zorder=10, label="Reference atom")

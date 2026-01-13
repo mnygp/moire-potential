@@ -4,11 +4,11 @@ import numpy as np
 from scipy.spatial import KDTree
 
 
-p = '../../structures/MoS2-WSe2-MatterSim/1.11_2946/structure_ml.json'
+p = "../../structures/MoS2-WSe2-MatterSim/1.11_2946/structure_ml.json"
 atoms = read(p)
 
-W_atoms = atoms[[atom.symbol == 'W' for atom in atoms]]
-Mo_atoms = atoms[[atom.symbol == 'Mo' for atom in atoms]]
+W_atoms = atoms[[atom.symbol == "W" for atom in atoms]]
+Mo_atoms = atoms[[atom.symbol == "Mo" for atom in atoms]]
 
 # #################### Z dist plot ##################################
 
@@ -22,22 +22,27 @@ Mo_pos_x = Mo_filtered.positions[:, 0]
 Mo_pos_z = Mo_filtered.positions[:, 2]
 
 plt.figure(figsize=(12, 2.5))
-plt.axes(aspect='equal')
-plt.plot(W_pos_x, W_pos_z, '-o', label='W atoms')
-plt.plot(Mo_pos_x, Mo_pos_z, '-o', label='Mo atoms')
+plt.axes(aspect="equal")
+plt.plot(W_pos_x, W_pos_z, "-o", label="W atoms")
+plt.plot(Mo_pos_x, Mo_pos_z, "-o", label="Mo atoms")
 W_i = 4
 Mo_i = 5
-plt.vlines([W_pos_x[W_i]], Mo_pos_z[Mo_i], W_pos_z[W_i],
-           color='black', linestyles='--', label='Interlayer distance')
-plt.hlines([Mo_pos_z[Mo_i]], W_pos_x[W_i], Mo_pos_x[Mo_i],
-           linestyles='--', alpha=0.6)
-plt.title('Definition of Interlayer distance')
-plt.xlabel('X-Position [Å]')
-plt.ylabel('Z-Position [Å]')
+plt.vlines(
+    [W_pos_x[W_i]],
+    Mo_pos_z[Mo_i],
+    W_pos_z[W_i],
+    color="black",
+    linestyles="--",
+    label="Interlayer distance",
+)
+plt.hlines([Mo_pos_z[Mo_i]], W_pos_x[W_i], Mo_pos_x[Mo_i], linestyles="--", alpha=0.6)
+plt.title("Definition of Interlayer distance")
+plt.xlabel("X-Position [Å]")
+plt.ylabel("Z-Position [Å]")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig('better_vert_dist.png', dpi=500)
+plt.savefig("better_vert_dist.png", dpi=500)
 plt.close()
 
 # ################### Distorte lattice plot ###########################
@@ -64,8 +69,8 @@ y_coords = np.array(y_coords)
 
 ref2_i = 34
 
-ideal_x = x_coords-x_coords[ref2_i]
-ideal_y = y_coords-y_coords[ref2_i]
+ideal_x = x_coords - x_coords[ref2_i]
+ideal_y = y_coords - y_coords[ref2_i]
 
 theta_deg = 26  # rotation angle in degrees (example)
 theta = np.radians(theta_deg)  # convert to radians
@@ -91,16 +96,15 @@ amplified_x = dist_x + scale * dx
 amplified_y = dist_y + scale * dy
 
 
-
-plt.scatter(rot_x, rot_y, label='Ideal lattice')
-plt.scatter(amplified_x, amplified_y, label='Distorted lattice \n (Amplifiedx30)')
-plt.scatter(0, 0, color='red', label='Reference atom')
-plt.gca().set_aspect('equal', adjustable='box')
-plt.title('Hexagonal Lattice Pattern')
-plt.xlabel('x')
-plt.ylabel('y')
+plt.scatter(rot_x, rot_y, label="Ideal lattice")
+plt.scatter(amplified_x, amplified_y, label="Distorted lattice \n (Amplifiedx30)")
+plt.scatter(0, 0, color="red", label="Reference atom")
+plt.gca().set_aspect("equal", adjustable="box")
+plt.title("Hexagonal Lattice Pattern")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.xlim(-7.5, 7.5)
 plt.ylim(-7.5, 7.5)
-plt.grid(True, linestyle='--', alpha=0.5)
+plt.grid(True, linestyle="--", alpha=0.5)
 plt.legend()
-plt.savefig('better_lattice_distortion.png', dpi=500)
+plt.savefig("better_lattice_distortion.png", dpi=500)
