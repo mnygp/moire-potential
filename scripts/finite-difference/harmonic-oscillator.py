@@ -68,7 +68,7 @@ x0 = np.mean(X)
 y0 = np.mean(Y)
 """
 
-x0 = np.mean(real_points[:,0])
+x0 =  np.mean(real_points[:,0])
 y0 = np.mean(real_points[:,1])
 V_flat = 0.5 * m * omega**2 * ((real_points[:,0]-x0)**2 + (real_points[:,1]-y0)**2)
 
