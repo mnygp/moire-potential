@@ -1,13 +1,17 @@
-from ase.parallel import parprint
+from __future__ import annotations
+
+import csv
+
+import numpy as np
 from ase.optimize import BFGS
-from gpaw.new.extensions import D3
-from gpaw.new.ase_interface import GPAW
+from ase.parallel import parprint
 from gpaw import PW
+from gpaw.new.ase_interface import GPAW
+from gpaw.new.extensions import D3
+
 from functions.bandstructure import calc_gap
 from functions.structure import create_bilayer
 from functions.util import generate_scissor_shifts
-import numpy as np
-import csv
 
 
 def get_gaps(struct):
@@ -35,7 +39,7 @@ def get_gaps(struct):
 
 # [3.184, 3.2515, 3.319]  MoS2, average and WSe2 lattice constants
 for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
-    shift_arr = np.linspace(0, 1, 30)
+    shift_arr = np.linspace(0.5, 0.85, 10)
 
     z_dist_arr_before: list[float] = []
     gap_arr_before: list[float] = []
@@ -59,16 +63,6 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
             acute_corner=True,
         )
 
-        calc = GPAW(
-            mode=PW(1000),
-            xc="PBE",
-            kpts={"size": (12, 12, 1)},
-            symmetry="off",
-            txt="gpaw.txt",
-            extensions=[D3(xc="PBE")],
-        )
-        struct.calc = calc
-
         (
             pre_relax_z_dist,
             pre_relax_gap,
@@ -80,7 +74,18 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
         gap_soc_arr_before.append(pre_relax_gap_soc)
         gap_scissors_arr_before.append(pre_relax_gap_scissors)
         gap_scissors_soc_arr_before.append(pre_relax_gap_scissors_soc)
-        parprint("Pre gaps done")
+
+        parprint(f"Pre gaps done for shift: {shift:.2f}")
+
+        calc = GPAW(
+            mode=PW(800),
+            convergence={"forces": 5e-4},
+            kpts={"size": (10, 10, 1)},
+            txt="gpaw.txt",
+            extensions=[D3(xc="PBE")],
+            symmetry="off",
+        )
+        struct.calc = calc
 
         opt = BFGS(
             struct,
@@ -88,7 +93,7 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
             logfile=f"before_and_after/lcao_opt_{a:.2f}_{shift:.2f}_high_fid.log",
         )
         opt.run(fmax=0.005)
-        parprint("Relaxation done")
+        parprint(f"Relaxation done for shift: {shift:.2f}")
 
         (
             post_relax_z_dist,
@@ -101,8 +106,9 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
         gap_soc_arr_after.append(post_relax_gap_soc)
         gap_scissors_arr_after.append(post_relax_gap_scissors)
         gap_scissors_soc_arr_after.append(post_relax_gap_scissors_soc)
-        parprint("Post gaps done")
-        parprint(f"Shift={shift:.2f} done \n")
+
+        parprint(f"Post relax gaps done for shift: {shift:.2f}")
+        parprint(f"\n")
 
     rows = zip(
         shift_arr,
@@ -113,7 +119,7 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
         gap_scissors_soc_arr_before,
     )
     with open(
-        f"before_and_after/gap_shift_{a:.2f}_lcao_before_relax.csv",
+        f"gap_shift_{a:.2f}_lcao_before_relax.csv",
         mode="w",
         newline="",
     ) as csvfile:
@@ -132,7 +138,7 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
         gap_scissors_soc_arr_after,
     )
     with open(
-        f"before_and_after/gap_shift_{a:.2f}_lcao_after_relax.csv", mode="w", newline=""
+        f"gap_shift_{a:.2f}_lcao_after_relax.csv", mode="w", newline=""
     ) as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(
