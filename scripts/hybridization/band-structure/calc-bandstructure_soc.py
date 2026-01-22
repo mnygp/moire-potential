@@ -69,6 +69,7 @@ for i in range(14, 20):
 
     soc = soc_eigenstates(calc_load)
     e_mk = soc.eigenvalues().T
+    e_km = e_mk.T
     # e_mk -= soc.fermi_level
 
     soc_occ = soc.occupation_numbers().T  # shape matches e_mk

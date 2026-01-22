@@ -1,13 +1,10 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from ase.dft.kpoints import bandpath
 from ase.io.trajectory import Trajectory
 from ase.parallel import parprint
 from ase.spectrum.band_structure import BandStructure
 from gpaw import FermiDirac
 from gpaw.new.ase_interface import GPAW
 from gpaw.new.extensions import D3
-from gpaw.spinorbit import soc_eigenstates
 
 from functions.util import generate_scissor_shifts
 
@@ -55,8 +52,15 @@ for i in range(14, 20):
     )
 
     # VBM normalisation
-    e_kn = np.array([calc.get_eigenvalues(kpt=k) for k in range(len(calc.get_ibz_k_points()))])
-    f_kn = np.array([calc.get_occupation_numbers(kpt=k) for k in range(len(calc.get_ibz_k_points()))])
+    e_kn = np.array(
+        [calc.get_eigenvalues(kpt=k) for k in range(len(calc.get_ibz_k_points()))]
+    )
+    f_kn = np.array(
+        [
+            calc.get_occupation_numbers(kpt=k)
+            for k in range(len(calc.get_ibz_k_points()))
+        ]
+    )
 
     vbm = np.max(e_kn[f_kn > 1e-5])
 
@@ -65,4 +69,6 @@ for i in range(14, 20):
 
     bs_shift = BandStructure(bs.path, bs.energies, reference=vbm)
     bs_shift.subtract_reference()
-    bs_shift.plot(filename=f"bandstructure_shift_{shift_arr[i]:.2f}.png", emax=2, emin=-1)
+    bs_shift.plot(
+        filename=f"bandstructure_shift_{shift_arr[i]:.2f}.png", emax=2, emin=-1
+    )

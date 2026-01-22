@@ -5,11 +5,13 @@ from functions.finite_difference import diag_hamiltonian
 
 CONVERSION_FACTOR = hbar**2 / (m_e * e) * 1e20  # hbar²/(m_e*Å²)
 
+
 def V(x, y, M, omega, delta, phase):
     R = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
     V = M * omega**2 / 2 * R**2 * (1 - delta * np.cos(3 * phi + phase))
     return V / CONVERSION_FACTOR
+
 
 N_grid = 125
 # MoS2 electron effective mass 0.7
@@ -17,11 +19,11 @@ N_grid = 125
 m = 1.15  # in electron masses
 omega = 0.03088  # 0.05483  # in eV
 delta = 0.019
-R0 = np.sqrt(hbar * hbar / (omega * e * m * m_e))*1e10
+R0 = np.sqrt(hbar * hbar / (omega * e * m * m_e)) * 1e10
 
 
-x_lin = np.linspace(-4*R0, 4*R0, N_grid)
-y_lin = np.linspace(-4*R0, 4*R0, N_grid)
+x_lin = np.linspace(-4 * R0, 4 * R0, N_grid)
+y_lin = np.linspace(-4 * R0, 4 * R0, N_grid)
 X, Y = np.meshgrid(x_lin, y_lin, indexing="ij")
 
 dr = x_lin[1] - x_lin[0]

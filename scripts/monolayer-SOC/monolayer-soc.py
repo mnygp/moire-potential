@@ -107,7 +107,7 @@ for name, thick in zip(["MoS2", "WSe2"], [3.13, 3.36]):
         homo_kpts_arr_x.append(homo_kpts[0])
         homo_kpts_arr_y.append(homo_kpts[1])
 
-        parprint(f'{name} with lattice constant {lattice:.2f} done')
+        parprint(f"{name} with lattice constant {lattice:.2f} done")
 
     rows = zip(
         lattice_arr,

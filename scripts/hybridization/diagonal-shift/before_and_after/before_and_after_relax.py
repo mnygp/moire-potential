@@ -108,7 +108,7 @@ for a in [3.2515]:  # np.linspace(3.184, 3.319, 7):
         gap_scissors_soc_arr_after.append(post_relax_gap_scissors_soc)
 
         parprint(f"Post relax gaps done for shift: {shift:.2f}")
-        parprint(f"\n")
+        parprint("\n")
 
     rows = zip(
         shift_arr,
