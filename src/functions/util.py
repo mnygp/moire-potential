@@ -198,13 +198,14 @@ def get_atom_obj(
         if not check_formula(atoms_cell.get_chemical_symbols()):
             atoms_cell = fix_cell(atoms_cell, origins[i])
 
-        cell_centers.append(center_of_cell)
-        atoms_arr.append(atoms_cell)
+        if atoms is not None:
+            cell_centers.append(center_of_cell)
+            atoms_arr.append(atoms_cell)
 
     return atoms_arr, np.array(cell_centers)
 
 
-def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
+def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms | None:
     chemical_number = {"Mo": 1, "W": 1, "S": 2, "Se": 2}
 
     while not check_formula(atoms.get_chemical_symbols()):
@@ -213,16 +214,20 @@ def fix_cell(atoms: Atoms, origin: np.ndarray) -> Atoms:
             # Check whether the number of atoms is correct
             if len(symb[symb == atom_type]) != chemical_number[atom_type]:
                 indices = [i for i, x in enumerate(symb) if x == atom_type]
+                if len(indices) == 0:
+                    return None
                 # For S and Se, if there are 3 atoms, we want to keep
                 # the pair of atoms that are above each other
                 # and remove the one that is isolated
+                # breakpoint()
                 if len(indices) == 3 and (atom_type == "S" or atom_type == "Se"):
                     remove_isolated(atoms, indices)
                 else:
                     distances = np.array(
                         [dist(atoms.positions[i], origin) for i in indices]
                     )
-
+                    if len(distances) == 0:
+                        print(atoms)
                     furthest_index = indices[np.argmax(distances)]
                     del atoms[furthest_index]
 
