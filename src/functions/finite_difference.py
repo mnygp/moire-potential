@@ -1,7 +1,8 @@
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import eigsh
+from scipy.constants import hbar, m_e, e
 
-CONVERSION_FACTOR = 3.80998211  # hbar²/(m_e*Å²)
+CONVERSION_FACTOR = hbar**2 / (m_e * e) * 1e20  # hbar²/(m_e*Å²)
 
 coefficients = {
     2: [1, -2, 1],
@@ -11,7 +12,7 @@ coefficients = {
 }
 
 
-def laplacian(N, dr, order=2, conv_factor=CONVERSION_FACTOR):
+def laplacian(N, dr, order=2):
     lap = lil_matrix((N * N, N * N))
 
     coeffs = coefficients[order]
@@ -30,7 +31,7 @@ def laplacian(N, dr, order=2, conv_factor=CONVERSION_FACTOR):
         return lap / dr**2
 
 
-def hex_laplacian(N, dr, conv_factor, order=2):
+def hex_laplacian(N, dr, order=2):
     lap = lil_matrix((N * N, N * N))
 
     coeffs = coefficients[order]
@@ -46,20 +47,24 @@ def hex_laplacian(N, dr, conv_factor, order=2):
                 lap[j + i * N, new_j + i * N] += coeff  # y direction
                 lap[j + i * N, j + new_i * N] += coeff  # x direction
                 lap[j + i * N, new_j + new_i * N] += coeff  # xy direction
-        return 2 / 3 * lap / dr**2
+
+    return 2 / 3 * lap / dr**2
 
 
-def diag_hamiltonian(V_flat, m, dr, hexagonal, order, conv_factor=None):
+def diag_hamiltonian(V, m, dr, hexagonal, order, conv_factor=None):
+    assert V.shape[0] == V.shape[1], "This code only works on regular square grids"
+
     if conv_factor is None:
         conv_factor = CONVERSION_FACTOR
+
     if hexagonal:
-        L = hex_laplacian(len(V_flat), dr, order=order, conv_factor=conv_factor)
+        L = hex_laplacian(V.shape[0], dr, order=order)
     else:
-        L = laplacian(len(V_flat), dr, order=order, conv_factor=conv_factor)
+        L = laplacian(V.shape[0], dr, order=order)
     H = -CONVERSION_FACTOR / (2 * m) * L
 
     # Add potential on the diagonal
-    H.setdiag(H.diagonal() + V_flat)
+    H.setdiag(H.diagonal() + V.flatten())
     eigvals, eigvecs = eigsh(H, k=10, which="SM")
 
     return eigvals, eigvecs

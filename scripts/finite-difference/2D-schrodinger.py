@@ -100,6 +100,7 @@ H = -CONVERSION_FACTOR / (2 * m) * L
 H.setdiag(H.diagonal() + V_flat)
 
 eigvals, eigvecs = eigsh(H, k=10, which="SM")
+np.set_printoptions(linewidth=200, precision=3, suppress=True)
 print(eigvals * 1000)
 
 
