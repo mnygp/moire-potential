@@ -5,7 +5,7 @@ from ase import Atoms
 from numpy.typing import NDArray
 import numpy as np
 
-from functions.geometry import strain, interlayer_distance
+from functions.geometry import strain, interlayer_distance, shifts
 
 # TODO: Check if util function does the same
 def get_root_path(root: str, target: str) -> str:
@@ -40,7 +40,7 @@ def strains(atoms: Atoms) -> dict[str, NDArray]:
     print(f'Min strain {min(np.min(MoS2_strain[2]), np.min(WSe2_strain[2]))}')
     return {'MoS2': MoS2_strain, 'WSe2': WSe2_strain}
 
-# def shifts
+
 
 @tb.dynamical_workflow_generator_task
 def generate_wfs(paths):
@@ -65,3 +65,7 @@ class Sub_wf:
     @tb.task
     def z_dist(self):
         return tb.node('interlayer_distance', atoms=self.get_atoms)
+
+    @tb.task
+    def get_shifts(self):
+        return tb.node('shifts', atoms=self.get_atoms)

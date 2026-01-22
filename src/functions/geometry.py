@@ -4,9 +4,10 @@ from functions.util import closest_index, repeate_cells, get_cells, get_atom_obj
 from ase import Atoms
 from ase.io import write
 import os
+from numpy.typing import NDArray
 
 
-def height(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def height(atoms: Atoms) -> tuple[NDArray, NDArray, NDArray]:
     """Calculate the height of the top chalcogen layer relative to the
     bottom chalcogen layer."""
     symbols = np.array(atoms.get_chemical_symbols())
@@ -42,7 +43,7 @@ def height(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return top_layer[:, 0], top_layer[:, 1], top_layer[:, 2]
 
 
-def horizontal_distance(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def horizontal_distance(atoms: Atoms) -> tuple[NDArray, NDArray, NDArray]:
     """Calculate the horizontal distance between the two middle chalcogen
     layers."""
     symbols = np.array(atoms.get_chemical_symbols())
@@ -83,7 +84,7 @@ def horizontal_distance(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarra
     return Se_inner_atoms[:, 0], Se_inner_atoms[:, 1], Se_inner_atoms[:, 2]
 
 
-def modified_h_dist(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def modified_h_dist(atoms: Atoms) -> tuple[NDArray, NDArray, NDArray]:
     """Calculate a modified horizontal distance for the transition metal
     layer."""
     symbols = np.array(atoms.get_chemical_symbols())
@@ -116,7 +117,7 @@ def modified_h_dist(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return Mo_atoms[:, 0], Mo_atoms[:, 1], Mo_atoms[:, 2] / diag_len
 
 
-def strain(atoms: Atoms, atom_type: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def strain(atoms: Atoms, atom_type: str) -> tuple[NDArray, NDArray, NDArray]:
     """Calculate the local strain for the given transition metal atom type."""
     if atom_type not in ["W", "Mo"]:
         raise ValueError("Input not a valid atom type." + " Choose either 'W' or 'Mo'.")
@@ -167,9 +168,7 @@ def strain(atoms: Atoms, atom_type: str) -> tuple[np.ndarray, np.ndarray, np.nda
     return T_metal[:, 0], T_metal[:, 1], strain_arr
 
 
-def layer_thicknsess(
-    atoms: Atoms, atom_type: str
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def layer_thicknsess(atoms: Atoms, atom_type: str) -> tuple[NDArray, NDArray, NDArray]:
     """Calculate the thickness of the given chalcogen layer."""
     if atom_type not in ["S", "Se"]:
         raise ValueError("Input not a valid atom type." + " Choose either 'S' or 'Se'.")
@@ -204,7 +203,7 @@ def layer_thicknsess(
     return top_layer[:, 0], top_layer[:, 1], top_layer[:, 2]
 
 
-def interlayer_distance(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def interlayer_distance(atoms: Atoms) -> tuple[NDArray, NDArray, NDArray]:
     """Calculate the interlayer distance between the two transition metal
     layers."""
 
@@ -227,7 +226,6 @@ def interlayer_distance(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarra
         closest_particle = Mo_large[close]
         z_distance = abs(pos[2] - closest_particle[2])
         pos[2] = z_distance
-
     return W_atoms[:, 0], W_atoms[:, 1], W_atoms[:, 2]
 
 
@@ -260,8 +258,8 @@ def get_shifts(atoms: Atoms) -> dict[str, list[list[float]]]:
 def diagonal_shift(atoms: Atoms):
     """Calculate the diagonal shift between the two transition metal layers."""
 
-    v1_array, v2_array, origins = get_cells(atoms)
-    atoms_array, cell_center = get_atom_obj(atoms, origins, v1_array, v2_array)
+    v1_array, v2_array, W_pos = get_cells(atoms)
+    atoms_array, cell_center = get_atom_obj(atoms, W_pos, v1_array, v2_array)
 
     diag_shifts = np.zeros(len(atoms_array))
 
@@ -277,8 +275,34 @@ def diagonal_shift(atoms: Atoms):
         diag_shifts[i] = xy_dist / np.linalg.norm(v1_array[i] + v2_array[i])
 
         write(
-            f"atoms_files/atom_{origins[i, 0]:.2f}_{origins[i, 1]:.2f}_{xy_dist:.2f}.xyz",
+            f"atoms_files/atom_{W_pos[i, 0]:.2f}_{W_pos[i, 1]:.2f}_{xy_dist:.2f}.xyz",
             subcell,
         )
 
-    return origins, cell_center, diag_shifts
+    return W_pos, cell_center, diag_shifts
+
+
+def shifts(atoms: Atoms) -> dict[str, NDArray]:
+    v1_array, v2_array, W_pos = get_cells(atoms)
+    atoms_array, cell_center = get_atom_obj(atoms, W_pos, v1_array, v2_array)
+    diag_lengths = np.linalg.norm(v1_array + v2_array, axis=-1)
+    shifts_v1 = np.zeros(len(atoms_array))
+    shifts_v2 = np.zeros(len(atoms_array))
+
+    for i in range(len(atoms_array)):
+        subcell = atoms_array[i]
+        subcell.wrap()
+        Mo_pos = subcell.positions[subcell.symbols == "Mo"][0]
+        both_shifts = np.clip((Mo_pos[:2] @ np.linalg.inv(subcell.cell[:2, :2])), 0, 1)
+
+        first_Se_pos = subcell.positions[subcell.symbols == "Se"][0]
+        Se_dist = np.linalg.norm(first_Se_pos)
+
+        if Se_dist < diag_lengths[i] / 2:
+            shifts_v1[i] = both_shifts[0]
+            shifts_v2[i] = both_shifts[1]
+        else:  # This is to make sure that the recreated cell has the right orientation
+            shifts_v1[i] = 1 - both_shifts[0]
+            shifts_v2[i] = 1 - both_shifts[1]
+
+    return {"W pos": W_pos, "Shift v1": shifts_v1, "Shift v2": shifts_v2}

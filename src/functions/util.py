@@ -198,7 +198,7 @@ def get_atom_obj(
         if not check_formula(atoms_cell.get_chemical_symbols()):
             atoms_cell = fix_cell(atoms_cell, origins[i])
 
-        if atoms is not None:
+        if atoms_cell is not None:
             cell_centers.append(center_of_cell)
             atoms_arr.append(atoms_cell)
 
