@@ -165,7 +165,7 @@ def strain(atoms: Atoms, atom_type: str) -> tuple[NDArray, NDArray, NDArray]:
         warnings.warn(w)
         print("")
 
-    return T_metal[:, 0], T_metal[:, 1], strain_arr
+    return {"x": T_metal[:, 0], "y": T_metal[:, 1], "strain": strain_arr}
 
 
 def layer_thicknsess(atoms: Atoms, atom_type: str) -> tuple[NDArray, NDArray, NDArray]:
@@ -282,16 +282,28 @@ def diagonal_shift(atoms: Atoms):
     return W_pos, cell_center, diag_shifts
 
 
-def shifts(atoms: Atoms) -> dict[str, NDArray]:
+def shifts_and_z(atoms: Atoms) -> dict[str, NDArray]:
     v1_array, v2_array, W_pos = get_cells(atoms)
     atoms_array, cell_center = get_atom_obj(atoms, W_pos, v1_array, v2_array)
     diag_lengths = np.linalg.norm(v1_array + v2_array, axis=-1)
+
+    x = np.zeros(len(atoms_array))
+    y = np.zeros(len(atoms_array))
+    z = np.zeros(len(atoms_array))
     shifts_v1 = np.zeros(len(atoms_array))
     shifts_v2 = np.zeros(len(atoms_array))
 
     for i in range(len(atoms_array)):
         subcell = atoms_array[i]
         subcell.wrap()
+
+        x[i] = W_pos[i, 0]
+        y[i] = W_pos[i, 1]
+
+        Mo_pos = subcell.positions[subcell.symbols == "Mo"][0]
+        W_pos_sub = subcell.positions[subcell.symbols == "W"][0]
+        z[i] = abs(Mo_pos[2] - W_pos_sub[2])
+
         Mo_pos = subcell.positions[subcell.symbols == "Mo"][0]
         both_shifts = np.clip((Mo_pos[:2] @ np.linalg.inv(subcell.cell[:2, :2])), 0, 1)
 
@@ -305,4 +317,4 @@ def shifts(atoms: Atoms) -> dict[str, NDArray]:
             shifts_v1[i] = 1 - both_shifts[0]
             shifts_v2[i] = 1 - both_shifts[1]
 
-    return {"W pos": W_pos, "Shift v1": shifts_v1, "Shift v2": shifts_v2}
+    return {"x": x, "y": y, "shift v1": shifts_v1, "shift v2": shifts_v2, "z": z}
