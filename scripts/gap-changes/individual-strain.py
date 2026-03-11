@@ -2,7 +2,8 @@ from ase.build import mx2
 from ase.parallel import parprint
 from ase.calculators.dftd3 import DFTD3
 from ase.optimize import BFGS
-from gpaw import GPAW, PW, FermiDirac  # pyright: ignore
+from gpaw import PW, FermiDirac  # pyright: ignore
+from gpaw.new.ase_interface import GPAW
 from functions.bandstructure import get_vacuum_and_band_edges
 import numpy as np
 import csv

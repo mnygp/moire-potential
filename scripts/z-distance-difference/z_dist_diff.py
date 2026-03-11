@@ -3,6 +3,7 @@ from scipy.interpolate import LinearNDInterpolator
 from functions import geometry
 import matplotlib.pyplot as plt
 from ase.io import read
+import csv
 
 average_lattice = 3.2515
 MoS2_lattice = 3.184
@@ -16,13 +17,23 @@ small_data = np.genfromtxt(
 
 i = small_data[:, 0]
 j = small_data[:, 1]
-z_dist = small_data[:, 4]
+z_dist_dft = small_data[:, 4]
+
+
+mattersim_data = np.genfromtxt(
+    "../mapping/results_mattersim.csv", skip_header=1, delimiter=","
+)
+shift = mattersim_data[:, 0]
+small_matsim_z = mattersim_data[:, 4]
+
+
+
 
 x_and_y = np.stack((i, j), axis=-1)
 transform_coords = x_and_y @ average_cell
 
 # small_interpolator = CloughTocher2DInterpolator(transform_coords, z_dist)
-small_interpolator = LinearNDInterpolator(transform_coords, z_dist)
+small_interpolator = LinearNDInterpolator(transform_coords, z_dist_dft)
 
 
 def diag(num_points, v1, v2):
@@ -38,7 +49,7 @@ diag_points = diag(resolution, average_cell[0, :], average_cell[1, :])
 small_interp_data = small_interpolator(diag_points)
 
 # Large cell data for plotting
-atoms = read("../../structures/MoS2-WSe2-MatterSim/1.11_2946/structure_ml.json")
+atoms = read("../../structures/MoS2-WSe2-MatterSim/1.05_3027/structure_ml.json")
 
 large_v1 = atoms.cell[0, :2]
 large_v2 = atoms.cell[1, :2]
@@ -65,9 +76,11 @@ print(large_interp_data.shape)
 
 plt.plot(np.linspace(0, 1, resolution), small_interp_data, label="DFT small cells")
 plt.plot(np.linspace(0, 1, resolution), large_interp_data, label="MatterSim structure")
+plt.plot(shift, small_matsim_z, label="MatterSim small cells")
 plt.xlabel("Shift along diagonal [Normalized]")
 plt.ylabel("Interlayer Distance [Å]")
 plt.title("Interlayer Distance vs Lattice Shift along diagonal")
 plt.legend()
+plt.grid()
 plt.tight_layout()
 plt.savefig("interlayer_distance_vs_shift_diagonal.png", dpi=500)

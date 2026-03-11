@@ -1,10 +1,13 @@
-import numpy as np
+import os
 import warnings
-from functions.util import closest_index, repeate_cells, get_cells, get_atom_obj
+
+import numpy as np
 from ase import Atoms
 from ase.io import write
-import os
 from numpy.typing import NDArray
+from scipy.interpolate import LinearNDInterpolator
+
+from functions.util import closest_index, get_atom_obj, get_cells, repeate_cells
 
 
 def height(atoms: Atoms) -> tuple[NDArray, NDArray, NDArray]:
@@ -285,24 +288,38 @@ def diagonal_shift(atoms: Atoms):
 def shifts_and_z(atoms: Atoms) -> dict[str, NDArray]:
     v1_array, v2_array, W_pos = get_cells(atoms)
     atoms_array, cell_center = get_atom_obj(atoms, W_pos, v1_array, v2_array)
-    diag_lengths = np.linalg.norm(v1_array + v2_array, axis=-1)
+    diag_lengths = np.linalg.norm(v1_array - v2_array, axis=-1)
 
     x = np.zeros(len(atoms_array))
     y = np.zeros(len(atoms_array))
     z = np.zeros(len(atoms_array))
     shifts_v1 = np.zeros(len(atoms_array))
     shifts_v2 = np.zeros(len(atoms_array))
-
+    """
+    Mo_x_L, Mo_y_L, Mo_z_L = repeate_cells(
+        Mo_pos[:, 0],
+        Mo_pos[:, 1],
+        Mo_pos[:, 2],
+        range(-1, 2),
+        atoms.cell[0, :2],
+        atoms.cell[1, :2],
+    )
+    Mo_interp = LinearNDInterpolator((Mo_x_L, Mo_y_L), Mo_z_L)
+    """
+    _, _, z = interlayer_distance(atoms)
     for i in range(len(atoms_array)):
         subcell = atoms_array[i]
         subcell.wrap()
 
         x[i] = W_pos[i, 0]
         y[i] = W_pos[i, 1]
+        y[i] = W_pos[i, 1]
 
+        """
         Mo_pos = subcell.positions[subcell.symbols == "Mo"][0]
         W_pos_sub = subcell.positions[subcell.symbols == "W"][0]
         z[i] = abs(Mo_pos[2] - W_pos_sub[2])
+        """
 
         Mo_pos = subcell.positions[subcell.symbols == "Mo"][0]
         both_shifts = np.clip((Mo_pos[:2] @ np.linalg.inv(subcell.cell[:2, :2])), 0, 1)
