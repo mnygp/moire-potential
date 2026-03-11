@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import numpy as np
 import taskblaster as tb
@@ -38,7 +42,7 @@ def get_dirs() -> list[str]:
 
 
 def read_atoms(p: str) -> Atoms:
-    atoms = read(p + "/MatterSim_relaxed_extra_high_fid.json")
+    atoms = read(p + "/MatterSim_relaxed_high_fid.json")
     return atoms
 
 
@@ -118,7 +122,6 @@ def strain_corr(input_dict: dict[str, NDArray], atoms: Atoms) -> NDArray:
         atoms.cell[1, :2],  # type: ignore
     )
     # ####### Load strain data here #######
-    # TODO: Perhaps use SOC calculated strain correction???
     data_path = get_root_path("calculations", "band_edges_medium_soc.csv")
     data = np.genfromtxt(data_path, skip_header=1, dtype=float, delimiter=",")
 
@@ -149,7 +152,7 @@ def optimized_z_gap(input_dict: dict[str, NDArray]) -> NDArray:
     raw = np.genfromtxt(
         get_root_path(
             "calculations",
-            "optimized_z_gaps.csv",
+            "optimized_z_gaps_0_005.csv",
         ),
         delimiter=",",
         names=True,
@@ -172,11 +175,7 @@ def optimized_z_gap(input_dict: dict[str, NDArray]) -> NDArray:
     shift2_vals = np.append(shift2_vals, 1.0)
 
     # To be removed once i have the better data set
-    gap_grid = np.pad(
-        gap_grid,
-        ((0, 1), (0, 1)),
-        mode="wrap"
-    )
+    gap_grid = np.pad(gap_grid, ((0, 1), (0, 1)), mode="wrap")
     interp = RegularGridInterpolator(
         (shift1_vals, shift2_vals),
         gap_grid,
@@ -222,24 +221,20 @@ def parameter_z_gap(input_dict: dict[str, NDArray]) -> NDArray:
     )
     gap_interpolator = LinearNDInterpolator(points, data.ravel())
     gaps = gap_interpolator(
-        list(zip(input_dict["z_dist"],
-                 input_dict["shift v1"],
-                 input_dict["shift v2"]))
+        list(zip(input_dict["z_dist"], input_dict["shift v1"], input_dict["shift v2"]))
     )
     print(f"Length of param z gap array {len(gaps)}")
     return {"gap": gaps, "x": input_dict["W_x"], "y": input_dict["W_y"]}
 
 
-def collect_gaps(gap: dict[str, NDArray],
-                 correction: dict[str, NDArray]) -> NDArray:
+def collect_gaps(gap: dict[str, NDArray], correction: dict[str, NDArray]) -> NDArray:
     gap_x_round = np.round(gap["x"], 5)
     gap_y_round = np.round(gap["y"], 5)
 
     corr_x_round = np.round(correction["x"], 5)
     corr_y_round = np.round(correction["y"], 5)
 
-    gap_mask = np.where((gap_x_round == corr_x_round)
-                        & (gap_y_round == corr_y_round))
+    gap_mask = np.where((gap_x_round == corr_x_round) & (gap_y_round == corr_y_round))
 
     return {
         "x": gap["x"][gap_mask],
@@ -292,8 +287,13 @@ def finite_diff(
     eigvals, eigvecs = diag_hamiltonian(V, m, dr, hexagonal=True, order=2)
     np.set_printoptions(linewidth=200, precision=3, suppress=True)
     print(eigvals * 1000)
-    return {"eigvals": eigvals, "eigvecs": eigvecs,
-            "points": real_points, "pot": V_flat, "N_grid": N_grid}
+    return {
+        "eigvals": eigvals,
+        "eigvecs": eigvecs,
+        "points": real_points,
+        "pot": V_flat,
+        "N_grid": N_grid,
+    }
 
 
 def z_diff(geometry_dict: dict[str, NDArray]) -> dict[str, NDArray]:
@@ -306,7 +306,7 @@ def z_diff(geometry_dict: dict[str, NDArray]) -> dict[str, NDArray]:
     raw = np.genfromtxt(
         get_root_path(
             "calculations",
-            "optimized_z_gaps.csv",
+            "optimized_z_gaps_0_005.csv",
         ),
         delimiter=",",
         names=True,
@@ -325,13 +325,7 @@ def z_diff(geometry_dict: dict[str, NDArray]) -> dict[str, NDArray]:
     # Difference
     diff = z_geo - z_interp
 
-    return {
-        "x": x,
-        "y": y,
-        "z_geo": z_geo,
-        "z_interp": z_interp,
-        "diff": diff
-    }
+    return {"x": x, "y": y, "z_geo": z_geo, "z_interp": z_interp, "diff": diff}
 
 
 @tb.dynamical_workflow_generator_task
@@ -373,15 +367,13 @@ class Sub_wf:
     @tb.task
     def corrected_opt_gap(self):
         return tb.node(
-            "collect_gaps", gap=self.gap_opt_z,
-            correction=self.strain_correction
+            "collect_gaps", gap=self.gap_opt_z, correction=self.strain_correction
         )
 
     @tb.task
     def corrected_param_gap(self):
         return tb.node(
-            "collect_gaps", gap=self.gap_param_z,
-            correction=self.strain_correction
+            "collect_gaps", gap=self.gap_param_z, correction=self.strain_correction
         )
 
     @tb.task
@@ -432,8 +424,7 @@ def plot_z(input, atoms):
 
         # Scatter plots
         X, Y = np.meshgrid(
-            np.linspace(min(x_L), max(x_L), 600),
-            np.linspace(min(y_L), max(y_L), 600)
+            np.linspace(min(x_L), max(x_L), 600), np.linspace(min(y_L), max(y_L), 600)
         )
         interpolated_z = interp(X, Y)
 
@@ -453,8 +444,7 @@ def plot_z(input, atoms):
         )
 
         plt.colorbar(im, label="Z dist")
-        plt.title("Interlayer distance for twist "
-                  f"angle {angle_natoms.split('_')[0]}")
+        plt.title(f"Interlayer distance for twist angle {angle_natoms.split('_')[0]}")
         plt.xlabel("x [Å]")
         plt.ylabel("y [Å]")
         plt.tight_layout()
@@ -533,8 +523,7 @@ def plot_strain(input, atoms):
         Mo_x_L, Mo_y_L, Mo_strain_L = repeate_cells(
             Mo_x, Mo_y, np.array(Mo_strain) * 100, range(-1, 2), v1, v2
         )
-        Mo_interp = LinearNDInterpolator(np.column_stack((Mo_x_L, Mo_y_L)),
-                                         Mo_strain_L)
+        Mo_interp = LinearNDInterpolator(np.column_stack((Mo_x_L, Mo_y_L)), Mo_strain_L)
 
         X_Mo, Y_Mo = np.meshgrid(
             np.linspace(Mo_x_L.min(), Mo_x_L.max(), 600),
@@ -547,8 +536,7 @@ def plot_strain(input, atoms):
         W_x_L, W_y_L, W_strain_L = repeate_cells(
             W_x, W_y, np.array(W_strain) * 100, range(-1, 2), v1, v2
         )
-        W_interp = LinearNDInterpolator(np.column_stack((W_x_L, W_y_L)),
-                                        W_strain_L)
+        W_interp = LinearNDInterpolator(np.column_stack((W_x_L, W_y_L)), W_strain_L)
 
         X_W, Y_W = np.meshgrid(
             np.linspace(W_x_L.min(), W_x_L.max(), 600),
@@ -571,8 +559,7 @@ def plot_strain(input, atoms):
             vmin=vmin,
             vmax=vmax,
         )
-        ax_Mo.set_title(f"Mo strain for twist "
-                        f"angle {angle_natoms.split('_')[0]}")
+        ax_Mo.set_title(f"Mo strain for twist angle {angle_natoms.split('_')[0]}")
         ax_Mo.set_xlabel("x [Å]")
         ax_Mo.set_ylabel("y [Å]")
 
@@ -586,8 +573,7 @@ def plot_strain(input, atoms):
             vmin=vmin,
             vmax=vmax,
         )
-        ax_W.set_title("W strain for twist "
-                       f"angle {angle_natoms.split('_')[0]}")
+        ax_W.set_title(f"W strain for twist angle {angle_natoms.split('_')[0]}")
         ax_W.set_xlabel("x [Å]")
 
         # One shared colorbar
@@ -608,14 +594,18 @@ def plot_strain(input, atoms):
 
     # --- Top panel: max/min strains ---
     ax_top = fig.add_subplot(gs[0])
-    ax_top.plot(angle, np.array(max_Mo_strain) * 100, "-o",
-                label="Max Mo strain", color="C0")
-    ax_top.plot(angle, np.array(min_Mo_strain) * 100, "-^",
-                label="Min Mo strain", color="C0")
-    ax_top.plot(angle, np.array(max_W_strain) * 100, "-o",
-                label="Max W strain", color="C1")
-    ax_top.plot(angle, np.array(min_W_strain) * 100, "-^",
-                label="Min W strain", color="C1")
+    ax_top.plot(
+        angle, np.array(max_Mo_strain) * 100, "-o", label="Max Mo strain", color="C0"
+    )
+    ax_top.plot(
+        angle, np.array(min_Mo_strain) * 100, "-^", label="Min Mo strain", color="C0"
+    )
+    ax_top.plot(
+        angle, np.array(max_W_strain) * 100, "-o", label="Max W strain", color="C1"
+    )
+    ax_top.plot(
+        angle, np.array(min_W_strain) * 100, "-^", label="Min W strain", color="C1"
+    )
 
     ax_top.set_ylabel("Strain [%]")
     ax_top.grid(True)
@@ -677,14 +667,12 @@ def plot_strain_correction(input: dict[str, NDArray], atoms):
         v1 = a.cell[0, :2]
         v2 = a.cell[1, :2]
 
-        x_L, y_L, strain_L = repeate_cells(x, y, strain_corr,
-                                           range(-1, 2), v1, v2)
+        x_L, y_L, strain_L = repeate_cells(x, y, strain_corr, range(-1, 2), v1, v2)
         interp = LinearNDInterpolator(np.column_stack((x_L, y_L)), strain_L)
 
         # Scatter plots
         X, Y = np.meshgrid(
-            np.linspace(min(x_L), max(x_L), 600),
-            np.linspace(min(y_L), max(y_L), 600)
+            np.linspace(min(x_L), max(x_L), 600), np.linspace(min(y_L), max(y_L), 600)
         )
         interpolated_strain = interp(X, Y)
 
@@ -704,8 +692,7 @@ def plot_strain_correction(input: dict[str, NDArray], atoms):
         )
 
         plt.colorbar(im, label="Strain correction [meV]")
-        plt.title("Interlayer distance for twist "
-                  f"angle {angle_natoms.split('_')[0]}")
+        plt.title(f"Interlayer distance for twist angle {angle_natoms.split('_')[0]}")
         plt.xlabel("x [Å]")
         plt.ylabel("y [Å]")
         plt.tight_layout()
@@ -766,7 +753,7 @@ def plot_gap(input, atoms):
     for task_name, d in input.items():
         x = d["x"]
         y = d["y"]
-        gap = np.array(d["corr gap"])*1000
+        gap = np.array(d["corr gap"]) * 1000
 
         mask = ~np.isnan(gap)
         x = x[mask]
@@ -793,10 +780,11 @@ def plot_gap(input, atoms):
 
         # Scatter plots
         X, Y = np.meshgrid(
-            np.linspace(min(x_L), max(x_L), 600),
-            np.linspace(min(y_L), max(y_L), 600)
+            np.linspace(min(x_L), max(x_L), 600), np.linspace(min(y_L), max(y_L), 600)
         )
         interpolated_gap = interp(X, Y)
+
+        angle = [float(a) for a in angle]
 
         plt.figure(figsize=(6, 5))
 
@@ -814,8 +802,9 @@ def plot_gap(input, atoms):
         )
 
         plt.colorbar(im, label="Band gap")
-        plt.title("Strain corrected band gap for twist "
-                  f"angle {angle_natoms.split('_')[0]}")
+        plt.title(
+            f"Strain corrected band gap for twist angle {angle_natoms.split('_')[0]}"
+        )
         plt.xlabel("x [Å]")
         plt.ylabel("y [Å]")
         plt.tight_layout()
@@ -836,27 +825,104 @@ def plot_gap(input, atoms):
     ax_top.set_ylabel("Gap [meV]")
     ax_top.grid(True)
 
-    # Top x-axis: natoms
-    ax_top_tw = ax_top.twiny()
-    ax_top_tw.set_xlim(ax_top.get_xlim())
-    ax_top_tw.set_xticks(range(len(natoms)))
-    ax_top_tw.set_xticklabels(natoms, rotation=90)
-    ax_top_tw.set_xlabel("Number of atoms")
-    ax_top.legend()
-
     # Bottom panel: gap difference
     ax_bottom = fig.add_subplot(gs[1], sharex=ax_top)
     ax_bottom.plot(angle, max_gap - min_gap, "-o", color="red")
     ax_bottom.set_ylabel("ΔGap [meV]")
     ax_bottom.set_xlabel("Angle")
     ax_bottom.grid(True)
-    ax_bottom.set_xticks(range(len(angle)))
-    ax_bottom.set_xticklabels(angle, rotation=90)
 
-    # Align top and bottom plots neatly
-    plt.setp(ax_top.get_xticklabels(), visible=False)
     plt.tight_layout()
     plt.savefig("gap_angle_with_diff_even_space.png", dpi=500)
+    plt.close()
+
+
+def plot_energy(gap_input, fd_input):
+    angle = []
+    natoms = []
+    fd_energy = []
+    min_gap = []
+
+    for task_name, a in fd_input.items():
+        fd_energy.append(a["eigvals"][0] * 1000)
+
+    for task_name, d in gap_input.items():
+        x = d["x"]
+        y = d["y"]
+        gap = np.array(d["corr gap"]) * 1000
+
+        mask = ~np.isnan(gap)
+        x = x[mask]
+        y = y[mask]
+        gap = gap[mask]
+
+        print(task_name.split("/")[0])
+        print(np.nanmin(gap), np.nanmax(gap))
+
+        angle_natoms = task_name.split("/")[0]
+        min_gap.append(np.nanmin(gap))
+        # fd_energy.append(fd_input[angle_natoms]["eigvals"][0] * 1000)
+        angle.append(float(angle_natoms.split("_")[0]))
+        # angle.append(angle_natoms.split("_")[0])
+        natoms.append(angle_natoms.split("_")[1])
+
+    # Max min plot
+    min_gap = np.array(min_gap)
+
+    fig, (ax_top, ax_bot) = plt.subplots(
+        2,
+        1,
+        sharex=True,
+        figsize=(8, 6),
+        gridspec_kw={"height_ratios": [2, 1], "hspace": 0.05},
+    )
+
+    # Plot all curves on both axes
+    for ax in (ax_top, ax_bot):
+        ax.plot(angle, min_gap + fd_energy, "-o", label="FD + Min gap")
+        ax.plot(angle, min_gap, "-o", label="Min gap")
+        ax.plot(angle, fd_energy, "-o", label="FD")
+        ax.grid(True)
+
+    # Set y-limits (adjust numbers to your data)
+
+    ax_top.set_ylim(1100, 1250)
+    ax_bot.set_ylim(0, 75)
+
+    # Hide spines between axes
+    ax_top.spines["bottom"].set_visible(False)
+    ax_bot.spines["top"].set_visible(False)
+    ax_top.tick_params(labelbottom=False)
+
+    # Diagonal break marks
+    d = 0.015
+    kwargs = dict(color="k", clip_on=False)
+
+    ax_top.plot((-d, +d), (-d, +d), transform=ax_top.transAxes, **kwargs)
+    ax_top.plot((1 - d, 1 + d), (-d, +d), transform=ax_top.transAxes, **kwargs)
+
+    ax_bot.plot((-d, +d), (1 - d, 1 + d), transform=ax_bot.transAxes, **kwargs)
+    ax_bot.plot((1 - d, 1 + d), (1 - d, 1 + d), transform=ax_bot.transAxes, **kwargs)
+
+    # Labels and legend
+    ax_bot.set_xlabel("Angle")
+    ax_top.set_ylabel("Gap [meV]")
+    ax_top.legend()
+
+    plt.tight_layout()
+    plt.savefig("energy.png", dpi=500)
+    plt.close()
+
+    # Simple plot to comapre with experimentalists
+    plt.plot(angle, (min_gap + fd_energy) / 1000, "-o", label="FD + Min gap")
+    plt.ylim(bottom=0.9)
+    plt.xlabel("Angle")
+    plt.ylabel("Gap [eV]")
+    plt.legend()
+    plt.grid()
+
+    plt.tight_layout()
+    plt.savefig("energy_single.png", dpi=500)
     plt.close()
 
 
@@ -978,10 +1044,9 @@ def plot_z_diff(input):
 
     # Bottom x-axis: angle
     ax_bottom.plot(angle, z_diff_avg, "-o", label="Avg. z diff", color="blue")
-    ax_bottom.fill_between(angle,
-                           z_diff_avg - z_diff_std,
-                           z_diff_avg + z_diff_std,
-                           alpha=0.2, color="blue")
+    ax_bottom.fill_between(
+        angle, z_diff_avg - z_diff_std, z_diff_avg + z_diff_std, alpha=0.2, color="blue"
+    )
     ax_bottom.set_xlabel("Angle")
     ax_bottom.set_ylabel("z difference [Å]")
     ax_bottom.grid(True)

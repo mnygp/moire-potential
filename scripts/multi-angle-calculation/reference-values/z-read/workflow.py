@@ -19,8 +19,12 @@ class ref_Wf:
             },
         )
 
+    @tb.task
+    def write_csv(self):
+        return tb.node('write_results_to_csv', results_dict=self.generated_wfs.gaps, csv_name='optimized_z_gaps.csv')
 
-z_arr = list(np.linspace(6.3, 6.9, 10, endpoint=True))
+
+z_arr = list(np.linspace(5.9, 7, 15, endpoint=True))
 shift_arr = list(np.linspace(0, 1, 15, endpoint=False))
 
 

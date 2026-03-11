@@ -12,7 +12,11 @@ class ref_Wf:
         return tb.node("wfs", inputs={"shift 1": self.shift_1, "shift 2": self.shift_2})
 
 
-shift_arr = list(np.linspace(0, 1, 20, endpoint=False))
+    @tb.task
+    def write_csv(self):
+        return tb.node('write_results_to_csv', results_dict=self.generated_wfs.gaps, csv_name='optimized_z_gaps.csv')
+
+shift_arr = list(np.linspace(0, 1, 20))
 
 
 def workflow(runner):

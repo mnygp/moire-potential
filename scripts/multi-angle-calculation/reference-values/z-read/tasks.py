@@ -9,11 +9,13 @@ from functions.bandstructure import calc_gap
 from functions.structure import create_bilayer
 from functions.util import generate_scissor_shifts
 
+from pathlib import Path
+import csv
 
 def gap_calculation(atoms: Atoms, indices: list[int], params: list[float]) -> float:
     scissor = generate_scissor_shifts(atoms)
     gap = calc_gap(
-        atoms, kpts=36, soc=True, eigensolver={"name": "scissors", "shifts": scissor}
+        atoms, kpts=36, soc=True, mode='lcao', eigensolver={"name": "scissors", "shifts": scissor}
     )[0]
     return {"gap": gap, "indices": indices, "params": params}
 
@@ -38,6 +40,27 @@ def relax_chalcogenides(atoms: Atoms, fmax: float) -> Atoms:
     opt = BFGS(atoms, logfile="chalc_relax.log", trajectory="chalc_relax.traj")
     opt.run(fmax=fmax)
     return atoms
+
+
+def write_results_to_csv(results_dict: dict, csv_name: str) -> str:
+    rows = []
+    for name, d in results_dict.items():
+        rows.append(
+            {
+                "gap": d['gap'],
+                "shift 1": d['params'][1],
+                "shift 2": d['params'][2],
+                "z":  d['params'][0],
+            }
+        )
+
+    csv_path = Path(csv_name)
+    with open(csv_path, mode="w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=["gap", "shift 1", "shift 2", "z"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    return str(csv_path.resolve())
 
 
 @tb.workflow

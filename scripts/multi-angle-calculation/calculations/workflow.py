@@ -36,6 +36,10 @@ class plotting_Workflow:
     def z_diff(self):
         return tb.node("plot_z_diff", input=self.z_diff_dict)
 
+    @tb.task
+    def energy(self):
+        return tb.node("plot_energy", fd_input=self.fd_opt, gap_input=self.gap_opt_dict)
+
 
 @tb.workflow
 class Workflow:
@@ -52,7 +56,7 @@ class Workflow:
             "z_opt_gap": "*/corrected_opt_gap",
             "z_param_gap": "*/corrected_param_gap",
             "finite_diff_opt": "*/fd_opt",
-            "z_difference": "*/compare_z"
+            "z_difference": "*/compare_z",
         }
     )
     def gen_wfs(self):
