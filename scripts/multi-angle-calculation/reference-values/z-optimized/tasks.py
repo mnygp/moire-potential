@@ -1,30 +1,48 @@
+import csv
+from pathlib import Path
+
+import numpy as np
 import taskblaster as tb
 from ase import Atoms
-from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from gpaw.new.ase_interface import GPAW
 from gpaw.new.extensions import D3
 
 from functions.bandstructure import calc_gap
 from functions.structure import create_bilayer
-from functions.util import generate_scissor_shifts
-
-from pathlib import Path
-
-import csv
+from functions.util import generate_scissor_shifts, get_path
 
 
-def gap_calculation(atoms: Atoms, indices: list[int], params: list[float]) -> float:
-    shifts = generate_scissor_shifts(atoms)
-    gap = calc_gap(
-        atoms, kpts=36, soc=True, mode='lcao', eigensolver={"name": "scissors", "shifts": shifts}
-    )[0]
-
+def gap_calculation(atoms: Atoms, indices: list[int], params: list[float]) -> dict:
     Mo_index = [atom.index for atom in atoms if atom.symbol == "Mo"][0]
     Mo_z = atoms.positions[Mo_index][2]
     W_index = [atom.index for atom in atoms if atom.symbol == "W"][0]
     W_z = atoms.positions[W_index][2]
     z_dist = abs(Mo_z - W_z)
+
+    Mo_path = get_path("reference-values", "MoS2_shifts.npy")
+    W_path = get_path("reference-values", "WSe2_shifts.npy")
+
+    Mo_shifts = np.load(Mo_path)
+    W_shifts = np.load(W_path)
+    Mo_unocc_shift = Mo_shifts[:, 0]
+    Mo_occ_shift = Mo_shifts[:, 1]
+    W_unocc_shift = W_shifts[:, 0]
+    W_occ_shift = W_shifts[:, 1]
+    dist_shift = np.linspace(6.2, 7.2, 21)
+    shifts = np.array([])
+    for s in [Mo_unocc_shift, Mo_occ_shift, W_unocc_shift, W_occ_shift]:
+        interp = np.interp(z_dist, dist_shift, s)
+        np.extend(shifts, interp)
+
+    shifts = generate_scissor_shifts(atoms, shifts)
+    gap = calc_gap(
+        atoms,
+        kpts=36,
+        soc=True,
+        mode="lcao",
+        eigensolver={"name": "scissors", "shifts": shifts},
+    )[0]
 
     return {"gap": gap, "z": z_dist, "indices": indices, "params": params}
 
@@ -51,10 +69,10 @@ def write_results_to_csv(results_dict: dict, csv_name: str) -> str:
     for name, d in results_dict.items():
         rows.append(
             {
-                "gap": d['gap'],
-                "shift 1": d['params'][0],
-                "shift 2": d['params'][1],
-                "z": d['z'],
+                "gap": d["gap"],
+                "shift 1": d["params"][0],
+                "shift 2": d["params"][1],
+                "z": d["z"],
             }
         )
 
@@ -85,7 +103,7 @@ class gap_Wf:
 
     @tb.task
     def relax_z(self):
-        return tb.node("relax_z_dist", atoms=self.create_struct, fmax=0.002)
+        return tb.node("relax_z_dist", atoms=self.create_struct, fmax=0.005)
 
     @tb.task
     def gap_calc(self):

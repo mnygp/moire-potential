@@ -5,6 +5,7 @@ __pycache__/
 *.png
 *.gpw
 *.traj
+*.npy
 **/tree/
 **/.taskblaster
 Moire_Potential.egg-info

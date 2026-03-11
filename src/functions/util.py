@@ -109,6 +109,22 @@ def get_root_path(directory: str) -> str | None:
         )
 
 
+def get_path(root: str, target: str) -> str:
+    current_path = Path(__file__).resolve()
+    print(f"Current path: {current_path}")
+
+    for parent in current_path.parents:
+        if parent.name == root:
+            full_path = Path(parent) / target.lstrip("/")
+            full_path = full_path.resolve()
+            print(f"Resolved structure path: {full_path}")
+            return str(full_path)
+
+    raise FileNotFoundError(
+        f"Could not find a directory named {root} in {current_path}"
+    )
+
+
 def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     atoms_L = atoms.repeat((3, 3, 1))
 
@@ -261,6 +277,7 @@ def generate_scissor_shifts(
         atoms = read(atom_path)
     # Shift values read of from C2DB the third number us the screening
     if image_charge is None:
+        # These values are for a z-dist of around 6.55Å
         MoS2_unocc_image = -0.08886783453907064
         MoS2_occ_image = 0.07683854934684342
         Wes2_unocc_image = -0.0811779263106481
