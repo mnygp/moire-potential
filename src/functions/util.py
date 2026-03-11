@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import numpy as np
 from ase import Atoms
-from pathlib import Path
 from ase.io import read
 
 
@@ -244,16 +245,36 @@ def remove_isolated(atoms: Atoms, indices: list[int]) -> Atoms:
     return atoms
 
 
-def generate_scissor_shifts(atom_path: Path | Atoms) -> list[tuple[float, float, int]]:
+def generate_scissor_shifts(
+    atom_path: Path | Atoms, image_charge: None | list[float] = None
+) -> list[tuple[float, float, int]]:
+    """
+    The image_charge array takes corrections in the folllowing order
+    MoS2 unoccupied states
+    MoS2 occupied states
+    WSe2 unoccupied states
+    WSe2 occupied states
+    """
     if isinstance(atom_path, Atoms):
         atoms = atom_path
     else:
         atoms = read(atom_path)
     # Shift values read of from C2DB the third number us the screening
-    MoS2_unocc_corr = 2.533 - 1.654 + (-0.08886783453907064)
-    MoS2_occ_corr = 0.001 - 0.073 + (0.07683854934684342)
-    WSe2_unocc_corr = 2.127 - 1.702 + (-0.0811779263106481)
-    WSe2_occ_corr = 0.000 - 0.464 + (0.06864835556460903)
+    if image_charge is None:
+        MoS2_unocc_image = -0.08886783453907064
+        MoS2_occ_image = 0.07683854934684342
+        Wes2_unocc_image = -0.0811779263106481
+        Wes2_occ_image = 0.06864835556460903
+    else:
+        MoS2_unocc_image = image_charge[0]
+        MoS2_occ_image = image_charge[1]
+        Wes2_unocc_image = image_charge[2]
+        Wes2_occ_image = image_charge[3]
+
+    MoS2_unocc_corr = 2.533 - 1.654 + (MoS2_unocc_image)
+    MoS2_occ_corr = 0.001 - 0.073 + (MoS2_occ_image)
+    WSe2_unocc_corr = 2.127 - 1.702 + (Wes2_unocc_image)
+    WSe2_occ_corr = 0.000 - 0.464 + (Wes2_occ_image)
 
     # Find out what layers have what indices
     MoS2_indices = []
