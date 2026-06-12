@@ -33,7 +33,7 @@ def gap_calculation(atoms: Atoms, indices: list[int], params: list[float]) -> di
     shifts = np.array([])
     for s in [Mo_unocc_shift, Mo_occ_shift, W_unocc_shift, W_occ_shift]:
         interp = np.interp(z_dist, dist_shift, s)
-        np.extend(shifts, interp)
+        shifts = np.append(shifts, interp)
 
     shifts = generate_scissor_shifts(atoms, shifts)
     gap = calc_gap(
@@ -55,7 +55,7 @@ def relax_z_dist(atoms: Atoms, fmax: float) -> Atoms:
         kpts={"size": (12, 12, 1)},
         txt="gpaw.txt",
         extensions=[D3(xc="PBE")],
-        convergence={"forces": 1e-4, "density": 1e-5},
+        convergence={"forces": 1e-5, "density": 1e-6},
     )
     atoms.calc = calc
 

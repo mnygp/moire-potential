@@ -1,3 +1,4 @@
+import inspect
 from pathlib import Path
 
 import numpy as np
@@ -110,19 +111,11 @@ def get_root_path(directory: str) -> str | None:
 
 
 def get_path(root: str, target: str) -> str:
-    current_path = Path(__file__).resolve()
-    print(f"Current path: {current_path}")
-
-    for parent in current_path.parents:
+    caller_file = Path(inspect.stack()[1].filename).resolve()
+    for parent in caller_file.parents:
         if parent.name == root:
-            full_path = Path(parent) / target.lstrip("/")
-            full_path = full_path.resolve()
-            print(f"Resolved structure path: {full_path}")
-            return str(full_path)
-
-    raise FileNotFoundError(
-        f"Could not find a directory named {root} in {current_path}"
-    )
+            return str(Path(parent) / target.lstrip("/"))
+    raise FileNotFoundError(f"Could not find '{root}' in parents of {caller_file}")
 
 
 def get_cells(atoms: Atoms) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

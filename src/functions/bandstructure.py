@@ -1,10 +1,11 @@
-from ase.io import read
+from pathlib import Path
+
+import numpy as np
 from ase import Atoms
+from ase.io import read
 from gpaw import PW, FermiDirac
 from gpaw.new.ase_interface import GPAW
 from gpaw.spinorbit import soc_eigenstates
-from pathlib import Path
-import numpy as np
 
 from functions.util import generate_scissor_shifts
 
@@ -197,3 +198,162 @@ def gap_and_kpts(atom_path, functional, kpts, occ_thresh=0.5, scissors=False):
         "lumo_kpt": lumo_kpt,
         "homo_kpt": homo_kpt,
     }
+
+
+def scissors_gpw_file(atom_path, kpts_dens: int, gpw_file: str):
+    if isinstance(atom_path, Path):
+        atoms = read(atom_path)
+    elif isinstance(atom_path, Atoms):
+        atoms = atom_path
+    else:
+        raise TypeError("atom_path must be a Path or Atoms object")
+
+    shift_arr = generate_scissor_shifts(atom_path)
+    calc = GPAW(
+        mode="lcao",
+        basis="szp(dzp)",
+        kpts=dict(density=kpts_dens, gamma=True),
+        eigensolver={"name": "scissors", "shifts": shift_arr},
+        txt="gpaw.txt",
+    )
+    atoms.calc = calc
+    atoms.get_potential_energy()
+    atoms.calc.write(f"{gpw_file}.gpw", mode="all")
+    return Path(f"{gpw_file}.gpw")
+
+
+def LDOS(
+    gpw_file: str | Path,
+    symbol: str,
+):
+    calc = GPAW(gpw_file)
+    atoms = calc.get_atoms()
+
+    dos = calc.dos()
+
+    homo_arr = []
+    lumo_arr = []
+    x_arr = []
+    y_arr = []
+
+    symbol_index = [
+        i for i, sym in enumerate(atoms.get_chemical_symbols()) if sym == symbol
+    ]
+
+    energies = np.linspace(-3, 3, 3000)
+    for i in symbol_index:
+        pdos_total = np.zeros_like(energies)
+        for l in range(3):
+            pdos_total += dos.raw_pdos(energies, a=i, l=l, width=0.05)
+
+        occ_state = energies < 0
+        unocc_state = energies > 0
+        non_zero_dos = pdos_total > 1e-2
+        homo = float(energies[occ_state & non_zero_dos].max())
+        lumo = float(energies[unocc_state & non_zero_dos].min())
+        lumo_arr.append(lumo)
+        homo_arr.append(homo)
+        x_arr.append(float(atoms.positions[i, 0]))
+        y_arr.append(float(atoms.positions[i, 1]))
+
+    return {"x": x_arr, "y": y_arr, "homo": homo_arr, "lumo": lumo_arr}
+
+
+def plot_moire_band_structure(
+    data: dict[str, dict[str, list[float | None]] | float],
+    grid_resolution: int = 200,
+    cmap: str = "RdYlBu_r",
+    figsize: tuple[float, float] = (18, 10),
+):
+    import matplotlib.pyplot as plt
+    from scipy.interpolate import LinearNDInterpolator
+
+    w: dict[str, list[float | None]] = data["W"]
+    mo: dict[str, list[float | None]] = data["Mo"]
+
+    w_x: np.ndarray = np.array(w["x"])
+    w_y: np.ndarray = np.array(w["y"])
+    w_homo: np.ndarray = np.array(w["homo"], dtype=float)
+    w_lumo: np.ndarray = np.array(w["lumo"], dtype=float)
+
+    mo_x: np.ndarray = np.array(mo["x"])
+    mo_y: np.ndarray = np.array(mo["y"])
+    mo_homo: np.ndarray = np.array(mo["homo"], dtype=float)
+    mo_lumo: np.ndarray = np.array(mo["lumo"], dtype=float)
+
+    # --- Build interpolators for each quantity ---
+    w_homo_interp: LinearNDInterpolator = LinearNDInterpolator(
+        np.column_stack([w_x, w_y]),
+        w_homo,
+    )
+    w_lumo_interp: LinearNDInterpolator = LinearNDInterpolator(
+        np.column_stack([w_x, w_y]),
+        w_lumo,
+    )
+    mo_homo_interp: LinearNDInterpolator = LinearNDInterpolator(
+        np.column_stack([mo_x, mo_y]),
+        mo_homo,
+    )
+    mo_lumo_interp: LinearNDInterpolator = LinearNDInterpolator(
+        np.column_stack([mo_x, mo_y]),
+        mo_lumo,
+    )
+
+    # --- Regular grid covering the full extent of all atoms ---
+    all_x: np.ndarray = np.concatenate([w_x, mo_x])
+    all_y: np.ndarray = np.concatenate([w_y, mo_y])
+    margin: float = 0.5
+    xi: np.ndarray = np.linspace(
+        all_x.min() - margin, all_x.max() + margin, grid_resolution
+    )
+    yi: np.ndarray = np.linspace(
+        all_y.min() - margin, all_y.max() + margin, grid_resolution
+    )
+    Xi, Yi = np.meshgrid(xi, yi)
+
+    # --- Interpolate onto grid ---
+    W_HOMO_grid: np.ndarray = w_homo_interp(Xi, Yi)
+    W_LUMO_grid: np.ndarray = w_lumo_interp(Xi, Yi)
+    Mo_HOMO_grid: np.ndarray = mo_homo_interp(Xi, Yi)
+    Mo_LUMO_grid: np.ndarray = mo_lumo_interp(Xi, Yi)
+
+    # --- Interlayer gap: Mo LUMO - W HOMO at W atom positions ---
+    mo_lumo_at_w: np.ndarray = mo_lumo_interp(w_x, w_y)
+    interlayer_gap: np.ndarray = mo_lumo_at_w - w_homo
+
+    gap_interp: LinearNDInterpolator = LinearNDInterpolator(
+        np.column_stack([w_x, w_y]),
+        interlayer_gap,
+    )
+    gap_grid: np.ndarray = gap_interp(Xi, Yi)
+
+    # --- Plot ---
+    fig, axes = plt.subplots(2, 3, figsize=figsize)
+
+    panels: list[tuple[np.ndarray, str, np.ndarray, np.ndarray]] = [
+        (W_HOMO_grid, "W HOMO (eV)", w_x, w_y),
+        (W_LUMO_grid, "W LUMO (eV)", w_x, w_y),
+        (Mo_HOMO_grid, "Mo HOMO (eV)", mo_x, mo_y),
+        (Mo_LUMO_grid, "Mo LUMO (eV)", mo_x, mo_y),
+        (gap_grid, "Interlayer gap (eV)", w_x, w_y),
+    ]
+
+    for ax, (grid, title, sx, sy) in zip(axes.flat, panels):
+        im = ax.pcolormesh(Xi, Yi, grid, cmap=cmap, shading="auto")
+        ax.scatter(sx, sy, c="k", s=5, alpha=0.3)
+        ax.set_title(title)
+        ax.set_xlabel("x (Å)")
+        ax.set_ylabel("y (Å)")
+        ax.set_aspect("equal")
+        fig.colorbar(im, ax=ax)
+
+    # Hide the unused 6th panel
+    axes.flat[-1].axis("off")
+
+    fig.suptitle(
+        f"Moiré band structure  |  Fermi level: {data['fermi_level']:.3f} eV (vs vacuum)",
+        fontsize=14,
+    )
+    fig.tight_layout()
+
+    return fig

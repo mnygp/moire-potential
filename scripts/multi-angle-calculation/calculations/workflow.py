@@ -9,6 +9,7 @@ class plotting_Workflow:
     strain_corr_dict = tb.var()
     z_diff_dict = tb.var()
     fd_opt = tb.var()
+    LCAO_dict = tb.var()
 
     @tb.task
     def z(self):
@@ -40,6 +41,10 @@ class plotting_Workflow:
     def energy(self):
         return tb.node("plot_energy", fd_input=self.fd_opt, gap_input=self.gap_opt_dict)
 
+    @tb.task
+    def plot_LCAO(self):
+        return tb.node("plot_local_gap", input=self.LCAO_dict, atoms=self.atoms_dict)
+
 
 @tb.workflow
 class Workflow:
@@ -57,6 +62,7 @@ class Workflow:
             "z_param_gap": "*/corrected_param_gap",
             "finite_diff_opt": "*/fd_opt",
             "z_difference": "*/compare_z",
+            "LCAO": "*/LCAO_projection",
         }
     )
     def gen_wfs(self):
@@ -71,6 +77,7 @@ class Workflow:
             gap_opt_dict=self.gen_wfs.z_opt_gap,
             z_diff_dict=self.gen_wfs.z_difference,
             fd_opt=self.gen_wfs.finite_diff_opt,
+            LCAO_dict=self.gen_wfs.LCAO,
         )
 
 

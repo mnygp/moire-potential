@@ -12,6 +12,7 @@ from ase.io import read
 from numpy.typing import NDArray
 from scipy.interpolate import LinearNDInterpolator, RegularGridInterpolator
 
+from functions.bandstructure import LDOS, scissors_gpw_file
 from functions.finite_difference import diag_hamiltonian
 from functions.geometry import shifts_and_z, strain
 from functions.util import repeate_cells
@@ -328,6 +329,12 @@ def z_diff(geometry_dict: dict[str, NDArray]) -> dict[str, NDArray]:
     return {"x": x, "y": y, "z_geo": z_geo, "z_interp": z_interp, "diff": diff}
 
 
+def LCAO_PDOS(gpw_file: Path | str) -> dict:
+    Mo_data = LDOS(symbol="Mo", gpw_file=gpw_file)
+    W_data = LDOS(symbol="W", gpw_file=gpw_file)
+    return {"Mo": Mo_data, "W": W_data}
+
+
 @tb.dynamical_workflow_generator_task
 def generate_wfs(paths: list[str]):
     for p in paths:
@@ -388,6 +395,19 @@ class Sub_wf:
     @tb.task
     def compare_z(self):
         return tb.node("z_diff", geometry_dict=self.geometry)
+
+    @tb.task
+    def LCAO_gpw(self):
+        return tb.node(
+            "scissors_gpw_file",
+            atom_path=self.get_atoms,
+            kpts_dens=4,
+            gpw_file="MoS2WSe2",
+        )
+
+    @tb.task
+    def LCAO_projection(self):
+        return tb.node("LCAO_PDOS", gpw_file=self.LCAO_gpw)
 
 
 # ################## Plotting functions #####################
@@ -942,7 +962,7 @@ def plot_wavefunction(input, atoms):
 
         print(d["eigvals"])
         eigvals_4.append(d["eigvals"][:4])  # meV
-        print(eigvals_4)
+        # print(eigvals_4)
         # Extract in-plane lattice vectors
         # a = atoms[angle_natoms + "/get_atoms"]
         # v1 = a.cell[0, :2]
@@ -1064,4 +1084,89 @@ def plot_z_diff(input):
     ax_bottom.legend()
     plt.tight_layout()
     plt.savefig("z_diff_angle_natoms.png", dpi=500)
+    plt.close()
+
+
+def plot_local_gap(input, atoms):
+    angle = []
+    natoms = []
+    min_gap = []
+    max_gap = []
+
+    for task_name, d in input.items():
+        angle_natoms = task_name.split("/")[0]
+        a = atoms[angle_natoms + "/get_atoms"]
+        v1 = a.cell[0, :2]
+        v2 = a.cell[1, :2]
+
+        # Mo LUMO field
+        x_Mo = np.asarray(d["Mo"]["x"])
+        y_Mo = np.asarray(d["Mo"]["y"])
+        lumo_Mo = np.asarray(d["Mo"]["lumo"])
+        x_Mo_L, y_Mo_L, lumo_L = repeate_cells(
+            x_Mo, y_Mo, lumo_Mo, range(-1, 2), v1, v2
+        )
+        interp_lumo = LinearNDInterpolator(np.column_stack((x_Mo_L, y_Mo_L)), lumo_L)
+
+        # W HOMO field
+        x_W = np.asarray(d["W"]["x"])
+        y_W = np.asarray(d["W"]["y"])
+        homo_W = np.asarray(d["W"]["homo"])
+        x_W_L, y_W_L, homo_L = repeate_cells(x_W, y_W, homo_W, range(-1, 2), v1, v2)
+        interp_homo = LinearNDInterpolator(np.column_stack((x_W_L, y_W_L)), homo_L)
+
+        # Common grid covering both tiled point clouds
+        x_min = min(np.min(x_Mo_L), np.min(x_W_L))
+        x_max = max(np.max(x_Mo_L), np.max(x_W_L))
+        y_min = min(np.min(y_Mo_L), np.min(y_W_L))
+        y_max = max(np.max(y_Mo_L), np.max(y_W_L))
+        X, Y = np.meshgrid(
+            np.linspace(x_min, x_max, 600),
+            np.linspace(y_min, y_max, 600),
+        )
+
+        gap = interp_lumo(X, Y) - interp_homo(X, Y)
+
+        plt.figure(figsize=(6, 5))
+        im = plt.imshow(
+            gap,
+            origin="lower",
+            extent=[x_min, x_max, y_min, y_max],
+            cmap="viridis",
+            aspect="equal",
+            vmin=np.nanmin(gap),
+            vmax=np.nanmax(gap),
+        )
+        plt.colorbar(im, label="Local gap [eV]  (Mo LUMO − W HOMO)")
+        plt.title(f"Local interlayer gap, twist angle {angle_natoms.split('_')[0]}")
+        plt.xlabel("x [Å]")
+        plt.ylabel("y [Å]")
+        plt.tight_layout()
+        plt.savefig(f"gap_{angle_natoms}.png", dpi=500)
+        plt.close()
+
+        angle.append(angle_natoms.split("_")[0])
+        natoms.append(angle_natoms.split("_")[1])
+        min_gap.append(np.nanmin(gap))
+        max_gap.append(np.nanmax(gap))
+
+    # Summary: min/max local gap vs angle
+    fig, ax_bottom = plt.subplots(figsize=(8, 5))
+    ax_bottom.plot(angle, min_gap, "-o", label="min local gap")
+    ax_bottom.plot(angle, max_gap, "-o", label="max local gap")
+    ax_bottom.set_xlabel("Angle")
+    ax_bottom.set_ylabel("Local gap [eV]")
+    ax_bottom.grid(True)
+    ax_bottom.set_xticks(range(len(angle)))
+    ax_bottom.set_xticklabels(angle, rotation=90)
+
+    ax_top = ax_bottom.twiny()
+    ax_top.set_xlim(ax_bottom.get_xlim())
+    ax_top.set_xticks(range(len(natoms)))
+    ax_top.set_xticklabels(natoms, rotation=90)
+    ax_top.set_xlabel("Number of atoms")
+
+    ax_bottom.legend()
+    plt.tight_layout()
+    plt.savefig("gap_angle_natoms.png", dpi=500)
     plt.close()
