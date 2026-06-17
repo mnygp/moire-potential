@@ -222,14 +222,11 @@ def scissors_gpw_file(atom_path, kpts_dens: int, gpw_file: str):
     return Path(f"{gpw_file}.gpw")
 
 
-def LDOS(
-    gpw_file: str | Path,
-    symbol: str,
-):
+def LDOS(gpw_file: str | Path, symbol: str, ldos_cut_off: float = 1e-2, width=0.05):
     calc = GPAW(gpw_file)
     atoms = calc.get_atoms()
 
-    dos = calc.dos()
+    dos = calc.dos(soc=True)
 
     homo_arr = []
     lumo_arr = []
@@ -244,13 +241,17 @@ def LDOS(
     for i in symbol_index:
         pdos_total = np.zeros_like(energies)
         for l in range(3):
-            pdos_total += dos.raw_pdos(energies, a=i, l=l, width=0.05)
+            pdos_total += dos.raw_pdos(energies, a=i, l=l, width=width)
 
         occ_state = energies < 0
         unocc_state = energies > 0
-        non_zero_dos = pdos_total > 1e-2
-        homo = float(energies[occ_state & non_zero_dos].max())
-        lumo = float(energies[unocc_state & non_zero_dos].min())
+        non_zero_dos = pdos_total > ldos_cut_off
+
+        occ_e = energies[occ_state & non_zero_dos]
+        unocc_e = energies[unocc_state & non_zero_dos]
+        homo = float(occ_e.max()) if occ_e.size else np.nan
+        lumo = float(unocc_e.min()) if unocc_e.size else np.nan
+
         lumo_arr.append(lumo)
         homo_arr.append(homo)
         x_arr.append(float(atoms.positions[i, 0]))
